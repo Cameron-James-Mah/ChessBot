@@ -76,7 +76,7 @@ namespace ChessBot
                 "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7",
                 "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8",
             };
-            generateTables();
+            AttackTables.generateTables();
             
             while (true)
             {
@@ -92,23 +92,47 @@ namespace ChessBot
                         break;
                     case "go":
                         //Console.WriteLine("bestmove e7e5");
-                        MoveGen.getPawnMoves(color, bPawn, wPawn, empty, ref moves, whitePieces, blackPieces);
-                        MoveGen.getKnightMoves(ref moves, color, whitePieces, blackPieces, bKnight, wKnight, empty);
-                        /*
+                        MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces);
+                        MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
+                        MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
+                        MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
+                        MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
+                        MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
+                        MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty);
+                        //for now just iterate over all of these moves and validate them for testing purposes, only iterate through once later on
+                        char[] tempBoard = new char[64];
+                        board.CopyTo(tempBoard, 0);
+                        List<Move> validMoves = new List<Move>();
+                        for (int i = 0; i < moves.Count; i++)
+                        {
+                            tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                            tempBoard[63 - moves[i].source] = ' ';
+                            Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
+                            int kingSource = BitOperations.TrailingZeroCount(bKing);
+                            if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b'))
+                            {
+                                validMoves.Add(moves[i]);
+                            }
+                            board.CopyTo(tempBoard, 0);
+                        }
+                        
                         for (int i = 0; i < moves.Count; i++)
                         {
                             Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest);
-                        }*/
-                        if(moves.Count == 0)
+                        }
+                        //
+                        if (validMoves.Count == 0)
                         {
                             Console.WriteLine("No moves");
                         }
-                        int rnd = new Random().Next(0, moves.Count-1);
+                        int rnd = new Random().Next(0, validMoves.Count-1);
                         Move bestMove = new Move();
-                        bestMove = moves[rnd];
+                        bestMove = validMoves[rnd];
                         
                         Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         moves.Clear();
+                        validMoves.Clear();
                         break;
                     case "stop":
                         System.Environment.Exit(0);
@@ -119,11 +143,22 @@ namespace ChessBot
                     case "t":
                         //printBitBoard(generateKnightAttack(0));
                         //generateTables();
+                        /*
                         for (int i = 0; i < 64; i++)
                         {
-                            printBitBoard(bishopAttacks[i]);
+                            printBitBoard(kingAttacks[i]);
                             Console.Write("Bitboard Source: " + i);
                             Console.WriteLine("\n");
+                        }*/
+                        for (int i = 0; i < 64; i++)
+                        {
+                            for(int j = 0; j < 4; j++)
+                            {
+                                printBitBoard(rookAttacks[i, j]);
+                                Console.Write("Bitboard Source: " + i + "\nBitboard dir: " + j);
+                                Console.WriteLine("\n");
+                            }
+                            
                         }
                         break;
                     case "position":
@@ -141,6 +176,10 @@ namespace ChessBot
                         {
                             Board.updateFromFen(tokens[2], board);
                             color = tokens[3][0];
+                            if(tokens.Length > 9)
+                            {
+                                Board.updateBoard(tokens[9..], board);
+                            }
                         }
                         else if (tokens.Length == 2) //new game
                         {
@@ -172,111 +211,137 @@ namespace ChessBot
                 }
             }
         }
-        public static void generateTables()
+        
+        public static bool isSquareAttacked(int source, ulong eBishop, ulong eRook, ulong eKnight, ulong eQueen, ulong ePawn, ulong eKing, ulong allPieces, char color)
         {
-            for (int i = 0; i < 64; i++)
+            ulong blockers = 0;
+            ulong sourceBit = (ulong)1 << source;
+            //bishop rays
+            ulong SWmoves = bishopAttacks[source, 0];
+            ulong SEmoves = bishopAttacks[source, 1];
+            ulong NWmoves = bishopAttacks[source, 2];
+            ulong NEmoves = bishopAttacks[source, 3];
+            int lsb = 0;
+            eBishop |= eQueen;
+            eRook |= eQueen;
+            blockers = SWmoves & allPieces;
+            if (blockers > 0)
             {
-                knightAttacks[i] = generateKnightAttack(i);
-                bishopAttacks[i] = generateBishopAttacks(i);
+                lsb = 63 - BitOperations.LeadingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if((enemy & eBishop) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = SEmoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = 63 - BitOperations.LeadingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eBishop) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = NWmoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = BitOperations.TrailingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eBishop) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = NEmoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = BitOperations.TrailingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eBishop) > 0)
+                {
+                    return true;
+                }
             }
 
+            //rook rays
+            ulong Smoves = rookAttacks[source, 0];
+            ulong Emoves = rookAttacks[source, 1];
+            ulong Wmoves = rookAttacks[source, 2];
+            ulong Nmoves = rookAttacks[source, 3];
+            blockers = Smoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = 63 - BitOperations.LeadingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eRook) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = Emoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = 63 - BitOperations.LeadingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eRook) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = Wmoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = BitOperations.TrailingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eRook) > 0)
+                {
+                    return true;
+                }
+            }
+            blockers = Nmoves & allPieces;
+            if (blockers > 0)
+            {
+                lsb = BitOperations.TrailingZeroCount(blockers);
+                ulong enemy = (ulong)1 << lsb; //first blocker in ray
+                if ((enemy & eRook) > 0)
+                {
+                    return true;
+                }
+            }
+            //knight jumps
+            ulong knightMoves = knightAttacks[source];
+            if((knightMoves & eKnight) > 0)
+            {
+                return true;
+            }
+            //pawn attacks
+            
+            if (color == 'b')
+            {
+                ulong pawnAttacksE = ePawn << 9;
+                pawnAttacksE &= notHFile;
+                ulong pawnAttacksW = ePawn << 7;
+                pawnAttacksW &= notAFile;
+                if(((pawnAttacksE | pawnAttacksW) & sourceBit) > 0)
+                {
+                    return true;
+                }
+            }
+
+            //king attacks
+            
+            if ((kingAttacks[BitOperations.TrailingZeroCount(eKing)] & sourceBit) > 0)
+            {
+                return true;
+            }
+
+            return false;
         }
+        
+        
 
-        public static void setBit(ref ulong b, int source)
-        {
-            ulong temp = 1;
-            temp <<= source;
-            b |= temp;
-        }
-
-        //piece attack boards
-        public static ulong generateKnightAttack(int source)
-        {
-            ulong attacks = 0;
-            ulong bitboard = 0;
-            setBit(ref bitboard, source);
-            //north jumps
-            if (((bitboard << 6) & notABFile) > 0)
-            {
-                attacks |= bitboard << 6;
-            }
-            if (((bitboard << 15) & notAFile) > 0)
-            {
-                attacks |= bitboard << 15;
-            }
-            if (((bitboard << 17) & notHFile) > 0)
-            {
-                attacks |= bitboard << 17;
-            }
-            if (((bitboard << 10) & notHGFile) > 0)
-            {
-                attacks |= bitboard << 10;
-            }
-            //south jumps
-            if (((bitboard >> 6) & notHGFile) > 0)
-            {
-                attacks |= bitboard >> 6;
-            }
-            if (((bitboard >> 15) & notHFile) > 0)
-            {
-                attacks |= bitboard >> 15;
-            }
-            if (((bitboard >> 17) & notAFile) > 0)
-            {
-                attacks |= bitboard >> 17;
-            }
-            if (((bitboard >> 10) & notABFile) > 0)
-            {
-                attacks |= bitboard >> 10;
-            }
-
-            ;
-            return attacks;
-        }
-        public static ulong generateBishopAttacks(int source)
-        {
-            ulong attacks = 0;
-            ulong bitboard = 0;
-            setBit(ref bitboard, source);
-            //SW ray
-            int offset = 7;
-            while (((bitboard >> offset) & notHFile) > 0)
-            {
-                bitboard = 0;
-                setBit(ref bitboard, source);
-                attacks |= bitboard >> offset;
-                offset += 7;
-            }
-            //SE ray
-            offset = 9;
-            while (((bitboard >> offset) & notAFile) > 0)
-            {
-                bitboard = 0;
-                setBit(ref bitboard, source);
-                attacks |= bitboard >> offset;
-                offset += 9;
-            }
-            //NW ray
-            offset = 9;
-            while (((bitboard << offset) & notHFile) > 0)
-            {
-                bitboard = 0;
-                setBit(ref bitboard, source);
-                attacks |= bitboard << offset;
-                offset += 9;
-            }
-            //NE ray
-            offset = 7;
-            while (((bitboard << offset) & notAFile) > 0)
-            {
-                bitboard = 0;
-                setBit(ref bitboard, source);
-                attacks |= bitboard << offset;
-                offset += 7;
-            }
-
-            return attacks;
-        }
         public static void printBitBoard(ulong bitboard)
         {
             ulong temp = 0b_10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;

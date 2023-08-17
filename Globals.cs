@@ -26,8 +26,11 @@ class Globals
     public const ulong notSWBorder = 0b_01111111_01111111_01111111_01111111_01111111_01111111_01111111_00000000;
     public const ulong notSEBorder = 0b_11111110_11111110_11111110_11111110_11111110_11111110_11111110_00000000;
 
+    //attack tables
     public static ulong[] knightAttacks = new ulong[64];
-    public static ulong[] bishopAttacks = new ulong[64];
+    public static ulong[,] bishopAttacks = new ulong[64, 4]; //0 = SW, 1 = SE, 2 = NW, 3 = NE
+    public static ulong[,] rookAttacks = new ulong[64, 4]; //0 = S, 1 = E, 2 = W, 3 = N
+    public static ulong[] kingAttacks = new ulong[64];
 
-
+    
 }
