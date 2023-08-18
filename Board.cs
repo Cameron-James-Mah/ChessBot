@@ -106,13 +106,14 @@ class Board
         //Console.WriteLine(fen);
         //printBoard(temp);
     }
-    public static void updateBoard(string[] moves, char[] board)
+    public static void updateBoard(string[] moves, char[] board, ref int enPassant, ref ulong castleRights)
     {
         for (int i = 0; i < moves.Length; i++)
         {
             //Console.WriteLine(moves[i]);
-            //Console.WriteLine(getCellNumber(moves[i].Substring(0, 2)) + " to " + getCellNumber(moves[i].Substring(2, 2)));
+            //Console.WriteLine(getCellNumber(moves[i].Substring(0, 2)) + " to " + getCellNumber(moves[i].Substring(2, 2))); DONT DELETE THIS LINE 
             //check en passant
+            
             if (board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'p' && isCapture(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2))) && board[63 - getCellNumber(moves[i].Substring(2, 2))] == ' ')
             { //if black pawn moving and move is capture and square im moving to is empty then it is en passant
                 board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];
@@ -124,6 +125,13 @@ class Board
                 board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];
                 board[63 - getCellNumber(moves[i].Substring(2, 2)) + 8] = ' ';
                 board[63 - getCellNumber(moves[i].Substring(0, 2))] = ' ';
+            }
+            else if (board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'P' || board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'p' && isDouble(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2)))) //check for double pawn jump to mark for en passant
+            {
+                board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];
+                board[63 - getCellNumber(moves[i].Substring(0, 2))] = ' ';
+                //mark for en passant
+                enPassant = (getCellNumber(moves[i].Substring(2, 2))+ getCellNumber(moves[i].Substring(0, 2)))/2; 
             }
             else if (moves[i].Length == 5) //promotion
             {
@@ -162,7 +170,10 @@ class Board
                     board[63 - getCellNumber(moves[i].Substring(2, 2)) - 2] = ' ';
                 }
             }
-
+            if(((ulong)1 << getCellNumber(moves[i].Substring(0, 2)) & castleRights) > 0) //if moved an unmoved rook or king, lose castle rights involving that piece
+            {
+                castleRights ^= (ulong)1 << getCellNumber(moves[i].Substring(0, 2));
+            }
         }
         //printBoard(board);
     }
@@ -232,12 +243,21 @@ class Board
         Console.Write("g ");
         Console.Write("h \n");
     }
-    public static bool isCapture(int from, int to)
+    public static bool isCapture(int from, int to) //check for pawn capture
+    {
+        if (Math.Abs(from - to) == 7 || Math.Abs(from - to) == 9)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public static bool isDouble(int from, int to) //check for double jump, used so i can mark pieces available for en passant
     {
         if (Math.Abs(from - to) == 8 || Math.Abs(from - to) == 16)
         {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 }
