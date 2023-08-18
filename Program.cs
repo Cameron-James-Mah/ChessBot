@@ -17,8 +17,15 @@ namespace ChessBot
     {
         public struct Move
         {
-            public int source;
-            public int dest;
+            public Move(int s, int d, char p)
+            {
+                source = s;
+                dest = d;
+                promotion = p;
+            }
+            public int source { get; }
+            public int dest { get; }
+            public char promotion { get; }
         }
         
         public static void Main()
@@ -49,8 +56,11 @@ namespace ChessBot
             //attack tables
             
 
-            ulong enPassant = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000; //pawns that can be captured via en passant
+            ulong enPassant = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000; //pawns that can be captured via en passant, 
             char color = 'b';
+            
+            ulong castleRights = 0b_10001001_00000000_00000000_00000000_00000000_00000000_00000000_10001001; //track if pieces have been moved
+            
             List<Move> moves = new List<Move>();
             //pawn = p, knight = n, bishop = b, rook = r, queen = q, king = k
             //I think board should be inverted?
@@ -92,13 +102,13 @@ namespace ChessBot
                         break;
                     case "go":
                         //Console.WriteLine("bestmove e7e5");
-                        MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces);
+                        MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
                         MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
                         MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
                         MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
                         MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                         MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
-                        MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty);
+                        MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces);
                         //for now just iterate over all of these moves and validate them for testing purposes, only iterate through once later on
                         char[] tempBoard = new char[64];
                         board.CopyTo(tempBoard, 0);
@@ -119,7 +129,7 @@ namespace ChessBot
                         
                         for (int i = 0; i < moves.Count; i++)
                         {
-                            Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest);
+                            Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + "Promotion: " + moves[i].promotion);
                         }
                         //
                         if (validMoves.Count == 0)
@@ -129,8 +139,17 @@ namespace ChessBot
                         int rnd = new Random().Next(0, validMoves.Count-1);
                         Move bestMove = new Move();
                         bestMove = validMoves[rnd];
-                        
-                        Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
+                        Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);
+                        /*
+                        if(bestMove.promotion == ' ') //not 
+                        {
+                            Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);
+                        }
+                        else //non promotion move
+                        {
+                            Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
+                        }*/
+
                         moves.Clear();
                         validMoves.Clear();
                         break;
@@ -172,25 +191,26 @@ namespace ChessBot
                             'P','P','P','P','P','P','P','P',
                             'R','N','B','Q','K','B','N','R'
                         };
+                        int enP = -1;
                         if (tokens[1] == "fen") //game from fen
                         {
                             Board.updateFromFen(tokens[2], board);
                             color = tokens[3][0];
                             if(tokens.Length > 9)
                             {
-                                Board.updateBoard(tokens[9..], board);
+                                Board.updateBoard(tokens[9..], board, ref enP, ref castleRights);
                             }
                         }
                         else if (tokens.Length == 2) //new game
                         {
                             string[] temp = { };
-                            Board.updateBoard(temp, board);
+                            Board.updateBoard(temp, board, ref enP, ref castleRights);
                             color = 'w';
                         }
                         else //game from position startpos moves etc
                         {
                             string[] gameMoves = tokens[3..];
-                            Board.updateBoard(gameMoves, board);
+                            Board.updateBoard(gameMoves, board, ref enP, ref castleRights);
                             if(gameMoves.Length % 2 == 1)
                             {
                                 color = 'b';
@@ -199,6 +219,10 @@ namespace ChessBot
                             {
                                 color = 'w';
                             }
+                        }
+                        if(enP > 0)
+                        {
+                            enPassant |= ((ulong)1 << enP);
                         }
                         Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, 
                                     ref wPawn, ref wRook, ref wKnight, ref wBishop, ref wQueen, ref wKing,
