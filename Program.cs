@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Xml;
+using System.Xml.Linq;
 using static Globals;
 
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
@@ -22,7 +24,15 @@ namespace ChessBot
                 source = s;
                 dest = d;
                 promotion = p;
+                enPassant = false;
+                capPassant = -1; //sqaure of captured en passant piece
+                castleFrom = -1;
+                castleTo = -1;
             }
+            public bool enPassant { get; set; }
+            public int castleFrom { get; set; }
+            public int castleTo { get; set; }
+            public int capPassant { get; set; }
             public int source { get; }
             public int dest { get; }
             public char promotion { get; }
@@ -53,15 +63,12 @@ namespace ChessBot
             ulong whitePieces = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
             ulong blackPieces = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 
-            //attack tables
-            
-
             ulong enPassant = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000; //pawns that can be captured via en passant, 
             char color = 'b';
             
             ulong castleRights = 0b_10001001_00000000_00000000_00000000_00000000_00000000_00000000_10001001; //track if pieces have been moved
+
             
-            List<Move> moves = new List<Move>();
             //pawn = p, knight = n, bishop = b, rook = r, queen = q, king = k
             //I think board should be inverted?
             //a8 is msb and h1 is lsb
@@ -75,17 +82,7 @@ namespace ChessBot
                 'P','P','P','P','P','P','P','P',
                 'R','N','B','Q','K','B','N','R'
             };
-            //for converting square number(bit index from left of bitboard) to notation
-            string[] notation = new string[64] {
-                "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",
-                "h2", "g2", "f2", "e2", "d2", "c2", "b2", "a2",
-                "h3", "g3", "f3", "e3", "d3", "c3", "b3", "a3",
-                "h4", "g4", "f4", "e4", "d4", "c4", "b4", "a4",
-                "h5", "g5", "f5", "e5", "d5", "c5", "b5", "a5",
-                "h6", "g6", "f6", "e6", "d6", "c6", "b6", "a6",
-                "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7",
-                "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8",
-            };
+            
             AttackTables.generateTables();
             
             while (true)
@@ -102,13 +99,15 @@ namespace ChessBot
                         break;
                     case "go":
                         //Console.WriteLine("bestmove e7e5");
+                        /*
+                        List<Move> moves = new List<Move>();
                         MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
                         MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
                         MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
                         MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
                         MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                         MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
-                        MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces);
+                        MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, wRook, );
                         //for now just iterate over all of these moves and validate them for testing purposes, only iterate through once later on
                         char[] tempBoard = new char[64];
                         board.CopyTo(tempBoard, 0);
@@ -127,11 +126,11 @@ namespace ChessBot
                             board.CopyTo(tempBoard, 0);
                         }
                         
-                        for (int i = 0; i < moves.Count; i++)
+                        for (int i = 0; i < validMoves.Count; i++)
                         {
                             Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + "Promotion: " + moves[i].promotion);
                         }
-                        //
+                        
                         if (validMoves.Count == 0)
                         {
                             Console.WriteLine("No moves");
@@ -139,7 +138,7 @@ namespace ChessBot
                         int rnd = new Random().Next(0, validMoves.Count-1);
                         Move bestMove = new Move();
                         bestMove = validMoves[rnd];
-                        Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);
+                        Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);*/
                         /*
                         if(bestMove.promotion == ' ') //not 
                         {
@@ -150,8 +149,8 @@ namespace ChessBot
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         }*/
 
-                        moves.Clear();
-                        validMoves.Clear();
+                        //moves.Clear();
+                        //validMoves.Clear();
                         break;
                     case "stop":
                         System.Environment.Exit(0);
@@ -160,15 +159,7 @@ namespace ChessBot
                         Board.printBoard(board);
                         break;
                     case "t":
-                        //printBitBoard(generateKnightAttack(0));
-                        //generateTables();
                         /*
-                        for (int i = 0; i < 64; i++)
-                        {
-                            printBitBoard(kingAttacks[i]);
-                            Console.Write("Bitboard Source: " + i);
-                            Console.WriteLine("\n");
-                        }*/
                         for (int i = 0; i < 64; i++)
                         {
                             for(int j = 0; j < 4; j++)
@@ -178,7 +169,39 @@ namespace ChessBot
                                 Console.WriteLine("\n");
                             }
                             
+                        }*/
+                        /*
+                        ulong nodes = 0;
+                        List<Move> moves2 = new List<Move>();
+                        MoveGen.getPawnMoves(wPawn, empty, ref moves2, blackPieces, enPassant, color);
+                        MoveGen.getKnightMoves(ref moves2, blackPieces, wKnight, empty);
+                        MoveGen.getBishopMoves(ref moves2, blackPieces, wBishop, allPieces);
+                        MoveGen.getRookMoves(ref moves2, blackPieces, wRook, allPieces);
+                        MoveGen.getBishopMoves(ref moves2, blackPieces, wQueen, allPieces);
+                        MoveGen.getRookMoves(ref moves2, blackPieces, wQueen, allPieces);
+                        MoveGen.getKingMoves(ref moves2, blackPieces, wKing, empty, castleRights, allPieces, wRook);
+                        char[] tempBoard2 = new char[64];
+                        board.CopyTo(tempBoard2, 0);
+                        List<Move> validMoves2 = new List<Move>();
+                        for (int i = 0; i < moves2.Count; i++)
+                        {
+                            tempBoard2[63 - moves2[i].dest] = tempBoard2[63 - moves2[i].source];
+                            tempBoard2[63 - moves2[i].source] = ' ';
+                            Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard2, ref whitePieces, ref blackPieces);
+                            int kingSource = BitOperations.TrailingZeroCount(wKing);
+                            if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                            {
+                                nodes++;
+                                validMoves2.Add(moves2[i]);
+                            }
+                            board.CopyTo(tempBoard2, 0);
                         }
+                        for (int i = 0; i < validMoves2.Count; i++)
+                        {
+                            Console.WriteLine("From: " + validMoves2[i].source + " Destination: " + validMoves2[i].dest + " Promotion: " + validMoves2[i].promotion);
+                        }
+                        Console.WriteLine(validMoves2.Count);*/
                         break;
                     case "position":
                         board = new char[64] {
@@ -229,11 +252,156 @@ namespace ChessBot
                                     ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                         //Console.WriteLine(Convert.ToString((long)bPawn, 2));
                         break;
+                    case "perft":
+                        Console.WriteLine("Nodes: " + perft(Int32.Parse(tokens[1]), bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
+                            wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color));
+                        perftValue = int.Parse(tokens[1]);
+                        
+                        break;
                     default:
                         //Debugger.Launch();
                         break;
                 }
             }
+        }
+
+        public static ulong perft(int depth, ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen, ulong bKing,
+                                             ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen, ulong wKing,
+                                             ulong allPieces, ulong empty, char[] board, ulong whitePieces, ulong blackPieces,
+                                             ulong castleRights, ulong enPassant, char color)
+        {
+            
+            ulong nodes = 0;
+            if(depth == 0)
+            {
+                return 1;
+            }
+            if(color == 'b')
+            {
+                List<Move> moves = new List<Move>();
+                MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
+                MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
+                MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
+                MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
+                MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
+                MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
+                MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
+                char[] tempBoard = new char[64];
+                board.CopyTo(tempBoard, 0);
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    if (moves[i].promotion != ' ')
+                    {
+                        tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                    }
+                    else
+                    {
+                        tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                    }
+                    if (moves[i].capPassant >= 0)
+                    {
+                        tempBoard[63 - moves[i].capPassant] = ' ';
+                    }
+                    if (moves[i].castleFrom >= 0)
+                    {
+                        tempBoard[63 - moves[i].castleTo] = tempBoard[moves[i].castleFrom];
+                        tempBoard[63 - moves[i].castleFrom] = ' ';
+                    }
+                    tempBoard[63 - moves[i].source] = ' ';
+                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                        ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
+                    int kingSource = BitOperations.TrailingZeroCount(bKing);
+                    if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b'))
+                    {
+
+                        ulong newEnPassant = 0;
+                        ulong newCastleRights = castleRights;
+                        //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                        if (moves[i].enPassant)
+                        {
+                            newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                        }
+                        if ((castleRights & ((ulong)1 << moves[i].source)) > 0)
+                        {
+                            newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                        }
+                        //validMoves.Add(moves[i]); 
+                        ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w');
+                        nodes += temp;
+                        if(depth == 2)
+                        {
+                            Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
+                        }
+                    }
+                    board.CopyTo(tempBoard, 0);
+                }
+            }
+            else
+            {
+                List<Move> moves = new List<Move>();
+                MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
+                MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
+                MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
+                MoveGen.getRookMoves(ref moves, blackPieces, wRook, allPieces);
+                MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
+                MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
+                MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
+                char[] tempBoard = new char[64];
+                board.CopyTo(tempBoard, 0);
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    if (moves[i].promotion != ' ')
+                    {
+                        tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                    }
+                    else
+                    {
+                        tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                    }
+                    if (moves[i].capPassant >= 0)
+                    {
+                        tempBoard[63 - moves[i].capPassant] = ' ';
+                    }
+                    if (moves[i].castleFrom >= 0)
+                    {
+                        tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
+                        tempBoard[63 - moves[i].castleFrom] = ' ';
+                    }
+                    tempBoard[63 - moves[i].source] = ' ';
+                   
+                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                        ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
+                    int kingSource = BitOperations.TrailingZeroCount(wKing);
+                    if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                    {
+                        ulong newEnPassant = 0;
+                        ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
+                        //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                        if (moves[i].enPassant)
+                        {
+                            newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                        }
+                        else //RECENTLY ADDED THIS ON A WHIM, DOUBLE CHECK
+                        {
+                            newEnPassant = 0;
+                        }
+                        if ((castleRights & ((ulong)1 << moves[i].source)) > 0) //if castling move then update castleRights, I THINK THIS IS MY ISSUE 
+                        {
+                            newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                        }
+                        
+                        ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b');
+                        if (depth == 2)
+                        {
+                            
+                            Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
+                        }
+                        nodes += temp;
+                    }
+                    board.CopyTo(tempBoard, 0);
+                }
+            }
+            return nodes;
         }
         
         public static bool isSquareAttacked(int source, ulong eBishop, ulong eRook, ulong eKnight, ulong eQueen, ulong ePawn, ulong eKing, ulong allPieces, char color)
@@ -342,7 +510,7 @@ namespace ChessBot
             }
             //pawn attacks
             
-            if (color == 'b')
+            if (color == 'b') //white pawn attacks for black king
             {
                 ulong pawnAttacksE = ePawn << 9;
                 pawnAttacksE &= notHFile;
@@ -353,10 +521,20 @@ namespace ChessBot
                     return true;
                 }
             }
+            else if (color == 'w') //black pawn attacks for white king
+            {
+                ulong pawnAttacksE = ePawn >> 9;
+                pawnAttacksE &= notAFile;
+                ulong pawnAttacksW = ePawn >> 7;
+                pawnAttacksW &= notHFile;
+                if (((pawnAttacksE | pawnAttacksW) & sourceBit) > 0)
+                {
+                    return true;
+                }
+            }
 
             //king attacks
-            
-            if ((kingAttacks[BitOperations.TrailingZeroCount(eKing)] & sourceBit) > 0)
+            if ((kingAttacks[BitOperations.TrailingZeroCount(eKing)] & sourceBit) > (ulong)0)
             {
                 return true;
             }
@@ -387,6 +565,7 @@ namespace ChessBot
                 }
                 Console.Write("\n");
             }
+            Console.Write("\n");
         }
     }
 
