@@ -174,6 +174,10 @@ class Board
             {
                 castleRights ^= (ulong)1 << getCellNumber(moves[i].Substring(0, 2));
             }
+            if (((ulong)1 << getCellNumber(moves[i].Substring(2, 2)) & castleRights) > 0) //only relevant for fen given positions, prevent rook or king to move back into castling postion after starting fen pos starting piece off of caslting pos
+            {
+                castleRights ^= (ulong)1 << getCellNumber(moves[i].Substring(2, 2));
+            }
         }
         //printBoard(board);
     }

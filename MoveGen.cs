@@ -24,9 +24,8 @@ class MoveGen
             {
                 int lsb = BitOperations.TrailingZeroCount(pawnsDest);
                 //if promoting move
-                if ((pawnsDest & row0) > 0 || (pawnsDest & row7) > 0) //made it to either end
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0) //made it to either end
                 {
-                    Console.WriteLine("here");
                     moves.Add(new Move(lsb + 8, lsb, 'r'));
                     moves.Add(new Move(lsb + 8, lsb, 'n'));
                     moves.Add(new Move(lsb + 8, lsb, 'b'));
@@ -52,6 +51,7 @@ class MoveGen
                 int lsb = BitOperations.TrailingZeroCount(pawnsDest2);
                 pawnsDest2 = ((ulong)1 << lsb) ^ pawnsDest2;
                 Move newMove = new Move(lsb + 16, lsb, ' ');
+                newMove.enPassant = true;
                 //newMove.source = lsb + 16;
                 //newMove.dest = lsb;
                 moves.Add(newMove);
@@ -60,16 +60,36 @@ class MoveGen
             //east captures
             pawnsDest = myPawns >> 9;
             pawnsDest &= enemyPieces;
-            pawnsDest &= enPassant;
             pawnsDest &= notAFile;
             while (pawnsDest != 0)
             {
                 int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                if(((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0){
+                    moves.Add(new Move(lsb + 9, lsb, 'r'));
+                    moves.Add(new Move(lsb + 9, lsb, 'n'));
+                    moves.Add(new Move(lsb + 9, lsb, 'b'));
+                    moves.Add(new Move(lsb + 9, lsb, 'q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb + 9, lsb, ' ');
+                        newMove.capPassant = lsb + 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb + 9, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+                    
+                }
                 pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
-                Move newMove = new Move(lsb + 9, lsb, ' ');
+                
                 //newMove.source = lsb + 9;
                 //newMove.dest = lsb;
-                moves.Add(newMove);
+                
             }
             //west captures
             pawnsDest = myPawns >> 7;
@@ -79,10 +99,133 @@ class MoveGen
             {
                 int lsb = BitOperations.TrailingZeroCount(pawnsDest);
                 pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
-                Move newMove = new Move(lsb + 7, lsb, ' ');
-                //newMove.source = lsb + 7;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb + 7, lsb, 'r'));
+                    moves.Add(new Move(lsb + 7, lsb, 'n'));
+                    moves.Add(new Move(lsb + 7, lsb, 'b'));
+                    moves.Add(new Move(lsb + 7, lsb, 'q'));
+                }
+                else
+                {
+                    if((((ulong)1 << lsb) & enPassant) > 0){
+                        Move newMove = new Move(lsb + 7, lsb, ' ');
+                        newMove.capPassant = lsb + 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb + 7, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+                    
+                }
+            }
+        }
+        else if(color == 'w')
+        {
+            //single pushes
+            pawnsDest = myPawns << 8;
+            pawnsDest &= empty;
+            ulong pawnsDest2 = pawnsDest;
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                //if promoting move
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0) //made it to either end
+                {
+                    moves.Add(new Move(lsb - 8, lsb, 'r'));
+                    moves.Add(new Move(lsb - 8, lsb, 'n'));
+                    moves.Add(new Move(lsb - 8, lsb, 'b'));
+                    moves.Add(new Move(lsb - 8, lsb, 'q'));
+                }
+                else
+                {
+                    Move newMove = new Move(lsb - 8, lsb, ' ');
+                    //newMove.source = lsb + 8;
+                    //newMove.dest = lsb;
+                    moves.Add(newMove);
+                }
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+
+
+            }
+            //double pushes
+            pawnsDest2 = pawnsDest2 << 8;
+            pawnsDest2 &= row3;
+            pawnsDest2 &= empty;
+            while (pawnsDest2 != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest2);
+                pawnsDest2 = ((ulong)1 << lsb) ^ pawnsDest2;
+                Move newMove = new Move(lsb - 16, lsb, ' ');
+                newMove.enPassant = true;
+                //newMove.source = lsb + 16;
                 //newMove.dest = lsb;
                 moves.Add(newMove);
+            }
+            //pawn captures, en passant bits added to enemyPieces at beginning of function
+            //west captures
+            pawnsDest = myPawns << 9;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notHFile;
+            
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb - 9, lsb, 'R'));
+                    moves.Add(new Move(lsb - 9, lsb, 'N'));
+                    moves.Add(new Move(lsb - 9, lsb, 'B'));
+                    moves.Add(new Move(lsb - 9, lsb, 'Q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb - 9, lsb, ' ');
+                        newMove.capPassant = lsb - 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb - 9, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+                    
+                }
+            }
+            //east captures
+            pawnsDest = myPawns << 7;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notAFile;
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb - 7, lsb, 'R'));
+                    moves.Add(new Move(lsb - 7, lsb, 'N'));
+                    moves.Add(new Move(lsb - 7, lsb, 'B'));
+                    moves.Add(new Move(lsb - 7, lsb, 'Q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb - 7, lsb, ' ');
+                        newMove.capPassant = lsb - 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb - 7, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+                }
             }
         }
         
@@ -397,7 +540,8 @@ class MoveGen
         }
     }
 
-    public static void getKingMoves(ref List<Move> moves, ulong enemyPieces, ulong myKing, ulong empty, ulong castleRights, ulong allPieces)
+    public static void getKingMoves(ref List<Move> moves, ulong enemyPieces, ulong myKing, ulong empty, ulong castleRights, ulong allPieces, 
+        ulong myRook, ulong ePawn, ulong eRook, ulong eKnight, ulong eBishop, ulong eQueen, ulong eKing, char color)
     {
         int lsb = BitOperations.TrailingZeroCount(myKing);
         //printBitBoard(blackKnights);
@@ -420,16 +564,23 @@ class MoveGen
         {
             ulong longSquares = myKing << 1 | myKing << 2 | myKing << 3;
             ulong shortSquares = myKing >> 1 | myKing >> 2;
-            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0) //long castle
+            castleRights &= myRook;
+
+            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //long castle && not in check or castling through check
             {
                 Move newMove = new Move(lsb, lsb+2, ' ');
+                newMove.castleFrom = lsb + 4;
+                newMove.castleTo = lsb + 1;
                 //newMove.source = lsb;
                 //newMove.dest = lsb + 2;
                 moves.Add(newMove);
             }
-            if (((myKing >> 3) & castleRights) > 0 && (shortSquares & allPieces) == 0) //short castle
-            {
+            
+            if (((myKing >> 3) & castleRights) > 0 && (shortSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb-1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //short castle && not in check or castling through check
+            { //dont think i need to check the desination square of king for check since i am checking that later on
                 Move newMove = new Move(lsb, lsb-2, ' ');
+                newMove.castleFrom = lsb - 3;
+                newMove.castleTo = lsb - 1;
                 //newMove.source = lsb;
                 //newMove.dest = lsb - 2;
                 moves.Add(newMove);
