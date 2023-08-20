@@ -253,13 +253,16 @@ namespace ChessBot
                         //Console.WriteLine(Convert.ToString((long)bPawn, 2));
                         break;
                     case "perft":
+                        perftValue = int.Parse(tokens[1]);
                         Console.WriteLine("Nodes: " + perft(Int32.Parse(tokens[1]), bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color));
-                        perftValue = int.Parse(tokens[1]);
+                        
                         
                         break;
                     default:
                         //Debugger.Launch();
+                        Console.WriteLine("No command");
+
                         break;
                 }
             }
@@ -302,16 +305,16 @@ namespace ChessBot
                     {
                         tempBoard[63 - moves[i].capPassant] = ' ';
                     }
-                    if (moves[i].castleFrom >= 0)
+                    if (moves[i].castleFrom >= 0) //update rook position when castling
                     {
-                        tempBoard[63 - moves[i].castleTo] = tempBoard[moves[i].castleFrom];
+                        tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
                         tempBoard[63 - moves[i].castleFrom] = ' ';
                     }
                     tempBoard[63 - moves[i].source] = ' ';
                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                         ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
                     int kingSource = BitOperations.TrailingZeroCount(bKing);
-                    if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b'))
+                    if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
                     {
 
                         ulong newEnPassant = 0;
@@ -321,6 +324,10 @@ namespace ChessBot
                         {
                             newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
                         }
+                        else
+                        {
+                            newEnPassant = 0;
+                        }
                         if ((castleRights & ((ulong)1 << moves[i].source)) > 0)
                         {
                             newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
@@ -328,7 +335,7 @@ namespace ChessBot
                         //validMoves.Add(moves[i]); 
                         ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w');
                         nodes += temp;
-                        if(depth == 2)
+                        if(depth == perftValue)
                         {
                             Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
                         }
@@ -388,12 +395,12 @@ namespace ChessBot
                         if ((castleRights & ((ulong)1 << moves[i].source)) > 0) //if castling move then update castleRights, I THINK THIS IS MY ISSUE 
                         {
                             newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                            //printBitBoard(newCastleRights);
                         }
                         
                         ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b');
-                        if (depth == 2)
+                        if (depth == perftValue)
                         {
-                            
                             Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
                         }
                         nodes += temp;
