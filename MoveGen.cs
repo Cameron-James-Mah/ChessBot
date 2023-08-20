@@ -134,10 +134,10 @@ class MoveGen
                 //if promoting move
                 if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0) //made it to either end
                 {
-                    moves.Add(new Move(lsb - 8, lsb, 'r'));
-                    moves.Add(new Move(lsb - 8, lsb, 'n'));
-                    moves.Add(new Move(lsb - 8, lsb, 'b'));
-                    moves.Add(new Move(lsb - 8, lsb, 'q'));
+                    moves.Add(new Move(lsb - 8, lsb, 'R'));
+                    moves.Add(new Move(lsb - 8, lsb, 'N'));
+                    moves.Add(new Move(lsb - 8, lsb, 'B'));
+                    moves.Add(new Move(lsb - 8, lsb, 'Q'));
                 }
                 else
                 {
@@ -562,11 +562,12 @@ class MoveGen
         //castling moves
         if((myKing & castleRights) > 0)
         {
+            
             ulong longSquares = myKing << 1 | myKing << 2 | myKing << 3;
             ulong shortSquares = myKing >> 1 | myKing >> 2;
             castleRights &= myRook;
-
-            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //long castle && not in check or castling through check
+            //printBitBoard(castleRights);
+            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+2, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //long castle && not in check or castling through check
             {
                 Move newMove = new Move(lsb, lsb+2, ' ');
                 newMove.castleFrom = lsb + 4;

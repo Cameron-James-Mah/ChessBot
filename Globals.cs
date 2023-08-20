@@ -32,7 +32,7 @@ class Globals
     public static ulong[,] rookAttacks = new ulong[64, 4]; //0 = S, 1 = E, 2 = W, 3 = N
     public static ulong[] kingAttacks = new ulong[64];
 
-    public static int perftValue = 0;
+    public static int perftValue;
     //for converting square number(bit index from left of bitboard) to notation
     public static string[] notation = new string[64] {
                 "h1", "g1", "f1", "e1", "d1", "c1", "b1", "a1",
