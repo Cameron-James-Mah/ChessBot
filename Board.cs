@@ -2,7 +2,7 @@
 using static ChessBot.Program;
 class Board
 {
-    //Board init functions
+    //BOARD INIT FUNCTIONS
     public static void makeBoards(ref ulong bPawn, ref ulong bRook, ref ulong bKnight, ref ulong bBishop, ref ulong bQueen, ref ulong bKing,
             ref ulong wPawn, ref ulong wRook, ref ulong wKnight, ref ulong wBishop, ref ulong wQueen, ref ulong wKing,
             ref ulong allPieces, ref ulong empty, char[] board, ref ulong whitePieces, ref ulong blackPieces)
@@ -113,7 +113,7 @@ class Board
             //Console.WriteLine(moves[i]);
             //Console.WriteLine(getCellNumber(moves[i].Substring(0, 2)) + " to " + getCellNumber(moves[i].Substring(2, 2))); DONT DELETE THIS LINE 
             //check en passant
-            
+            enPassant = 0;
             if (board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'p' && isCapture(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2))) && board[63 - getCellNumber(moves[i].Substring(2, 2))] == ' ')
             { //if black pawn moving and move is capture and square im moving to is empty then it is en passant
                 board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];

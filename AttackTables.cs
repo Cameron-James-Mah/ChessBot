@@ -1,5 +1,7 @@
 ﻿using System;
 using static Globals;
+
+//COMPUTED PIECE ATTACK TABLES, RUNS ON ENGINE START
 public class AttackTables
 {
     public static void generateTables()
