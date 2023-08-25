@@ -3,7 +3,9 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using static ChessBot.Program;
 using static Globals;
+using static Position;
 
+//MOVE GENERATION FUNCTIONS
 class MoveGen
 {
     //Move genration functions
