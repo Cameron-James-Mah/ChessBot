@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using static Globals;
 using static Position;
 
+
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 
 
@@ -98,7 +99,17 @@ namespace ChessBot
                 'P','P','P','P','P','P','P','P',
                 'R','N','B','Q','K','B','N','R'
             };
-            
+            char[] board2 = new char[64] {
+                'r','n','b','q','k','b','n','r',
+                'p','p','p','p','p','p','p','p',
+                ' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',
+                ' ',' ',' ',' ','P',' ',' ',' ',
+                ' ',' ',' ',' ',' ',' ',' ',' ',
+                'P','P','P','P',' ','P','P','P',
+                'R','N','B','Q','K','B','N','R'
+            };
+
             AttackTables.generateTables();
             
             while (true)
@@ -114,9 +125,27 @@ namespace ChessBot
                         Console.WriteLine("readyok");
                         break;
                     case "go":
-                        int depth = 6; //temp hardcoded value
+                        ulong currH = Zobrist.computeHash(board);
+                        /*
+                        ulong newHash = currHash;
+                        Console.WriteLine(newHash);
+                        newHash ^= Zobrist.getHash(63 - 11, board[63 - 11]);
+                        newHash ^= Zobrist.getHash(63 - 27, board[63 - 11]);
+                        Console.WriteLine(newHash);
+                        newHash ^= Zobrist.getHash(63 - 27, board[63 - 11]);
+                        newHash ^= Zobrist.getHash(63 - 11, board[63 - 11]);
+                        Console.WriteLine(newHash);*/
+                        /*
+                        ulong newH = currH;
+                        newH ^= Zobrist.getHash(63 - 11, board[63 - 11]);
+                        newH ^= Zobrist.getHash(63 - 27, board[63 - 11]);
+                        Console.WriteLine(newH);
+                        Console.WriteLine(Zobrist.computeHash(board2));
+                        Console.WriteLine();*/
+                        int depth = 5; //temp hardcoded value
                         Move bestMove = new Move();
                         List<Move> moves = new List<Move>();
+
                         if (color == 'b') //minimizing
                         {
                             int minEval = int.MaxValue;
@@ -127,26 +156,38 @@ namespace ChessBot
                             MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                             MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
                             MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-                            char[] tempBoard = new char[64];
-                            board.CopyTo(tempBoard, 0);
+                            
                             for (int i = 0; i < moves.Count; i++)
                             {
+                                char[] tempBoard = new char[64];
+                                board.CopyTo(tempBoard, 0);
+                                ulong newHash = currH;
+                                newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
                                 if (moves[i].promotion != ' ')
                                 {
                                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
                                 }
                                 else
                                 {
                                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
                                 }
                                 if (moves[i].capPassant >= 0)
                                 {
                                     tempBoard[63 - moves[i].capPassant] = ' ';
+                                    newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
                                 }
                                 if (moves[i].castleFrom >= 0) //update rook position when castling
                                 {
                                     tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
                                     tempBoard[63 - moves[i].castleFrom] = ' ';
+                                    newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
+                                    newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
+                                }
+                                if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
+                                {
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
                                 }
                                 tempBoard[63 - moves[i].source] = ' ';
                                 Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
@@ -170,7 +211,8 @@ namespace ChessBot
                                         newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
                                     }
                                     //validMoves.Add(moves[i]); 
-                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue);
+                                    newHash = Zobrist.computeHash(tempBoard);
+                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue, newHash);
                                     if(temp < minEval)
                                     {
                                         bestMove = moves[i];
@@ -191,26 +233,38 @@ namespace ChessBot
                             MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
                             MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
                             MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-                            char[] tempBoard = new char[64];
-                            board.CopyTo(tempBoard, 0);
+                            
                             for (int i = 0; i < moves.Count; i++)
                             {
+                                char[] tempBoard = new char[64];
+                                board.CopyTo(tempBoard, 0);
+                                ulong newHash = currH;
+                                newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
                                 if (moves[i].promotion != ' ')
                                 {
                                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
                                 }
                                 else
                                 {
                                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
                                 }
                                 if (moves[i].capPassant >= 0)
                                 {
                                     tempBoard[63 - moves[i].capPassant] = ' ';
+                                    newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
                                 }
                                 if (moves[i].castleFrom >= 0)
                                 {
                                     tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
                                     tempBoard[63 - moves[i].castleFrom] = ' ';
+                                    newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
+                                    newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
+                                }
+                                if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
+                                {
+                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
                                 }
                                 tempBoard[63 - moves[i].source] = ' ';
 
@@ -235,12 +289,12 @@ namespace ChessBot
                                         newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
                                         //printBitBoard(newCastleRights);
                                     }
-
-                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', int.MinValue, int.MaxValue);
+                                    newHash = Zobrist.computeHash(tempBoard);
+                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', int.MinValue, int.MaxValue, newHash);
                                     if (temp > maxEval)
                                     {
                                         bestMove = moves[i];
-                                        maxEval = Math.Min(temp, maxEval);
+                                        maxEval = Math.Max(temp, maxEval);
                                     }
 
                                 }
@@ -256,14 +310,20 @@ namespace ChessBot
                         {
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         }
-                        
-
+                        /*
+                        for(int i = 0; i < moves.Count; i++)
+                        {
+                            Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);
+                        }*/
+                        whiteTable.Clear();
+                        blackTable.Clear();
                         break;
                     case "stop":
                         System.Environment.Exit(0);
                         break;
                     case "p":
                         Board.printBoard(board);
+                        Console.WriteLine("\nHash: " + Zobrist.computeHash(board));
                         break;
                     case "t":
                         List<Move> testMoves = new List<Move>();
@@ -324,7 +384,7 @@ namespace ChessBot
                         {
                             Console.WriteLine("No moves");
                         }
-                        printBitBoard(enPassant);
+                        
                         break;
                     case "test":
                         //run through perft tests
@@ -398,6 +458,11 @@ namespace ChessBot
                         timer.Reset();
                         break;
                     case "position":
+                        //zobritst init
+                        enPassant = 0;
+                        Zobrist.initialise();
+                        Zobrist.initTable();
+                        
                         board = new char[64] {
                             'r','n','b','q','k','b','n','r',
                             'p','p','p','p','p','p','p','p',
@@ -474,6 +539,7 @@ namespace ChessBot
                         timer.Reset();
                         perftValue = -1;
                         break;
+                    
                     default:
                         //Debugger.Launch();
                         Console.WriteLine("No command");

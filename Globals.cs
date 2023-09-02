@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using static ChessBot.Program;
 
 //0b_11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111;
@@ -44,8 +45,34 @@ class Globals
                 "h7", "g7", "f7", "e7", "d7", "c7", "b7", "a7",
                 "h8", "g8", "f8", "e8", "d8", "c8", "b8", "a8",
             };
+    public struct Entry
+    {
+        public Entry(int value, int depth, Move mv)
+        {
+            //Do i need true value? just did alpha/beta for checkers
+            //this.alpha = alpha;
+            //this.beta = beta;
+            this.depth = depth;
+            this.value = value;
+            this.mv = mv;
+            //this.key = key;
+            //this.board = board;
+        }
+        
+        //public int alpha { get; set; }
+        //public int beta { get; set; }
+        public int depth { get; set; }
+        public int value { get; set; }
 
-    public static List<List<List<int>>> zobristTable = new List<List<List<int>>>(); //transposition table
+        public Move mv { get; set; }
+
+    }
+
+    public static ulong[,] zobristTable = new ulong[12, 64]; //zobrist table
+    public static Dictionary<ulong, Entry> whiteTable = new Dictionary<ulong, Entry>(); //transposition table for white, should i maybe init with size and load factor later?
+    public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(); //transposition table for black, should i maybe init with size and load factor later?
+    //public static ulong whiteHash = Zobrist.NextUInt64(new Random());
+    //public static ulong blackHash = Zobrist.NextUInt64(new Random());
 
     /*
      * 
@@ -195,4 +222,7 @@ class Globals
         -30,-30,  0,  0,  0,  0,-30,-30,
         -50,-30,-30,-30,-30,-30,-30,-50
     };
+
+
+    
 }
