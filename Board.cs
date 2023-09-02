@@ -126,7 +126,7 @@ class Board
                 board[63 - getCellNumber(moves[i].Substring(2, 2)) + 8] = ' ';
                 board[63 - getCellNumber(moves[i].Substring(0, 2))] = ' ';
             }
-            else if (board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'P' || board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'p' && isDouble(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2)))) //check for double pawn jump to mark for en passant
+            else if (board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'P' && isDouble(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2))) || board[63 - getCellNumber(moves[i].Substring(0, 2))] == 'p' && isDouble(getCellNumber(moves[i].Substring(0, 2)), getCellNumber(moves[i].Substring(2, 2)))) //check for double pawn jump to mark for en passant
             {
                 board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];
                 board[63 - getCellNumber(moves[i].Substring(0, 2))] = ' ';
@@ -258,7 +258,7 @@ class Board
 
     public static bool isDouble(int from, int to) //check for double jump, used so i can mark pieces available for en passant
     {
-        if (Math.Abs(from - to) == 8 || Math.Abs(from - to) == 16)
+        if (Math.Abs(from - to) == 16)
         {
             return true;
         }
