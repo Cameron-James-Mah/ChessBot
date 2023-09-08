@@ -443,8 +443,9 @@ public class Position
     {
         if (depth == 0)
         {
-            return eval(board);
+            return eval(board, color);
         }
+        List<Move> moves = new List<Move>();
         if (color == 'b') //minimizing, black to move
         {
             //Console.WriteLine("---------------------------------------------");
@@ -454,8 +455,11 @@ public class Position
             {
                 //if true value return true value
                 if(blackTable[currHash].depth >= depth)
-                {
-                    
+                { 
+                    if (blackTable[currHash].trueValue)
+                    {
+                        return blackTable[currHash].value;
+                    }
                     beta = Math.Min(beta, blackTable[currHash].value);
                     //Console.WriteLine("Current key: " + currHash + "Table key: " + blackTable[currHash].key);
                     /*
@@ -473,8 +477,8 @@ public class Position
                 
                 
             }
-            int minEval = int.MaxValue;
-            List<Move> moves = new List<Move>();
+            int minEval = 60000; //arbitrary number
+            int kingSquare = BitOperations.TrailingZeroCount(bKing);
             MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
             MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
             MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
@@ -482,6 +486,9 @@ public class Position
             MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
             MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
             MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
+            ulong enemyPawnAttacks = wPawn << 7 & notAFile;
+            enemyPawnAttacks |= wPawn << 9 & notHFile;
+            orderMoves(ref moves, enemyPawnAttacks, ref board);
             //char[] tempBoard = new char[64];
             //board.CopyTo(tempBoard, 0);
             bool moved = false;
@@ -583,7 +590,7 @@ public class Position
 
                             //blackTable.Remove(currHash);
                             //blackTable.Add(currHash, new Entry(minEval, depth, moves[i], currHash, board));
-                            blackTable[currHash] = new Entry(minEval, depth, moves[i]);
+                            blackTable[currHash] = new Entry(minEval, depth, moves[i], false);
                             //Board.printBoard(blackTable[currHash].board);
                             //Console.WriteLine("---------------------------------------------");
                         }
@@ -594,19 +601,36 @@ public class Position
                 //Console.WriteLine(newHash);
             }
             //Console.WriteLine("\n\n");
-            if (!moved) //no valid moves so white must have checkmated black CHANGE THIS LATER TO ACCOUNT FOR STALEMATE
+            if (!moved) //no valid moves 
             {
-                minEval = int.MaxValue;
+                //int kingSource = BitOperations.TrailingZeroCount(bKing);
+                if(isSquareAttacked(kingSquare, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //checkmate
+                {
+                    minEval = 50000+depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
+                }
+                else //stalemate
+                {
+                    return 0;
+                }
+            }
+            //true value node here?
+            if (!blackTable.ContainsKey(currHash) || blackTable[currHash].depth < depth)
+            {
+                blackTable[currHash] = new Entry(minEval, depth, new Move(), true);
             }
             //Board.printBoard(board);
             return minEval;
-        }
+    }
         else //maximizing, white to move
         {
             //Board.printBoard(board);
             if (whiteTable.ContainsKey(currHash) && whiteTable[currHash].depth >= depth)
-            {
+            { 
                 
+                if (whiteTable[currHash].trueValue)
+                {
+                    return whiteTable[currHash].value;
+                }
                 alpha = Math.Max(alpha, whiteTable[currHash].value);
                 /*
                 Console.WriteLine("Current Hash: " + currHash);
@@ -620,8 +644,8 @@ public class Position
                     return alpha;
                 }
             }
-            int maxEval = int.MinValue;
-            List<Move> moves = new List<Move>();
+            int maxEval = -60000; //arbitrary number
+            int kingSquare = BitOperations.TrailingZeroCount(wKing);
             MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
             MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
             MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
@@ -631,7 +655,12 @@ public class Position
             MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
             //char[] tempBoard = new char[64];
             //board.CopyTo(tempBoard, 0);
+            ulong enemyPawnAttacks = bPawn >> 7 & notHFile;
+            enemyPawnAttacks |= bPawn >> 9 & notAFile;
+            orderMoves(ref moves, enemyPawnAttacks, ref board);
             bool moved = false;
+            
+            
             for (int i = 0; i < moves.Count; i++)
             {
                 char[] tempBoard = new char[64];
@@ -716,36 +745,45 @@ public class Position
                             //Console.WriteLine("---------------------------------------------");
                             //whiteTable.Remove(currHash);
                             //whiteTable.Add(currHash, new Entry(maxEval, depth, moves[i], currHash, board));
-                            whiteTable[currHash] = new Entry(maxEval, depth, moves[i]);
+                            whiteTable[currHash] = new Entry(maxEval, depth, moves[i], false);
                         }
                         return maxEval;
                     }
                 }
                 
             }
-            //true value
-            if (!moved) //no valid moves so black must have checkmated white
+            
+            if (!moved) //no valid moves 
             {
-                return int.MinValue;
+                //int kingSource = BitOperations.TrailingZeroCount(wKing); //THIS IS WHERE THE ISSUE IS
+                if(isSquareAttacked(kingSquare, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w')) //black must have checkmated white
+                {
+                    maxEval = -50000 - depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
+                    //Board.printBoard(board);
+                    //Console.WriteLine(kingSquare);
+                    /*
+                    Console.WriteLine("Queen: ");
+                    printBitBoard(bQueen);*/
+                    //Console.WriteLine(isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'));
+                }
+                else //stalemate
+                {
+                    //Board.printBoard(board);
+                    return 0;
+                }
+                
             }
+            if (!whiteTable.ContainsKey(currHash) || whiteTable[currHash].depth < depth)
+            {
+                whiteTable[currHash] = new Entry(maxEval, depth, new Move(), true); //true value 
+            }
+                
             return maxEval;
         }
     }
 
-    /*
-     * Considering:
-     * 
-     * material
-     * central pieces
-     * mobility
-     * king safety
-     * 
-     * endgame seperatve eval:
-     * enemy king on corner of board
-     * maybe add small bonus for having king close to enemy king to help close out endgames
-     * 
-     * */
-    public static int eval(char[] board)
+    
+    public static int eval(char[] board, char color)
     {
         int pawn = 100; //P/p
         int knight = 320; //N/n
@@ -756,8 +794,17 @@ public class Position
         //do i need a  king eval?
         int whiteEval = 0;
         int blackEval = 0;
-
-
+        int whiteMaterial = 0; //material not including pawns/king
+        int blackMaterial = 0; //material not including pawns/king
+        int wKingIdx = 0; //index of white king
+        int bKingIdx = 0; //index of black king
+        //rank and file of kings, bit inconvinient since 1d array and i also dont want to use modulus operation
+        int wRank = 0;
+        int wFile = 0;
+        int bRank = 0;
+        int bFile = 0;
+        int rank = 0;
+        int file = 0;
         for(int i = 0; i < board.Length; i++)
         {
             //white pieces
@@ -768,22 +815,28 @@ public class Position
             else if (board[i] == 'N')
             {
                 whiteEval += knight + knightSquares[i];
+                whiteMaterial += knight;
             }
             else if (board[i] == 'B')
             {
                 whiteEval += bishop + bishopSquaresW[i];
+                whiteMaterial += bishop;
             }
             else if (board[i] == 'R')
             {
                 whiteEval += rook + rookSquaresW[i];
+                whiteMaterial += rook;
             }
             else if (board[i] == 'Q')
             {
                 whiteEval += queen + queenSquares[i];
+                whiteMaterial += queen;
             }
             else if (board[i] == 'K')
             {
-                whiteEval += king + kingSquaresMiddleW[i];
+                wKingIdx = i;
+                wFile = file;
+                wRank = rank;
             }
 
             //black pices
@@ -794,29 +847,116 @@ public class Position
             else if (board[i] == 'n')
             {
                 blackEval += knight + knightSquares[i];
+                blackMaterial += knight;
             }
             else if (board[i] == 'b')
             {
                 blackEval += bishop + bishopSquaresB[i];
+                blackMaterial += bishop;
             }
             else if (board[i] == 'r')
             {
                 blackEval += rook + rookSquaresB[i];
+                blackMaterial += rook;
             }
             else if (board[i] == 'q')
             {
                 blackEval += queen + queenSquares[i];
+                blackMaterial += queen;
             }
+            
             else if (board[i] == 'k')
             {
-                blackEval += king + kingSquaresMiddleB[i];
+                bKingIdx = i;
+                bFile = file;
+                bRank = rank;
             }
-
+            file++;
+            if(file == 8)
+            {
+                rank++;
+                file = 0;
+            }
+        }
+        if(blackMaterial > 900 || whiteMaterial > 900)
+        {
+            blackEval += king + kingSquaresMiddleB[bKingIdx];
+            whiteEval += king + kingSquaresMiddleW[wKingIdx];
+        }
+        else
+        {
+            blackEval += king + kingSquaresEnd[bKingIdx];
+            whiteEval += king + kingSquaresEnd[wKingIdx];
+            int dist = Math.Abs((wFile - bFile)) + (Math.Abs((wRank - bRank)));
+            dist *= 12;
+            if(color == 'b') //white just moved so advantage to white i think
+            {
+                //whiteEval += cornerKingSquares[wKingIdx];
+                return whiteEval - (blackEval + dist);
+            }
+            
+            return (whiteEval+dist) - blackEval;
         }
 
         return whiteEval-blackEval;
     }
 
+    static void orderMoves(ref List<Move> moves, ulong enemyPawnAttacks, ref char[] board)
+    {
+        for(int i = 0; i < moves.Count; i++)
+        {
+            int moveScore = 0;
+            int pieceVal = getPieceValue(board[63-moves[i].source]);
+            int captureVal = getPieceValue(board[63 - moves[i].dest]);
+            if(captureVal > 0)
+            {
+                moveScore = 10*captureVal - pieceVal;
+            }
+            if (moves[i].promotion != ' ')
+            {
+                moveScore += getPieceValue(moves[i].promotion);
+            }
+            if( (((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1)
+            {
+                moveScore -= pieceVal;
+            }
+            moves[i].moveVal = moveScore;
+        }
+        //order after
+        moves.Sort((x, y) => y.moveVal.CompareTo(x.moveVal));
+    }
 
+    static int getPieceValue(char piece)
+    {
+        /*
+         int pawn = 100; //P/p
+        int knight = 320; //N/n
+        int bishop = 330; //B/b
+        int rook = 500; //R/r
+        int queen = 900; //Q/q
+        int king = 2000; //K/k
+         */
+        if(piece == 'P' || piece == 'p')
+        {
+            return 100;
+        }
+        else if (piece == 'N' || piece == 'n')
+        {
+            return 320;
+        }
+        else if (piece == 'B' || piece == 'b')
+        {
+            return 330;
+        }
+        else if (piece == 'R' || piece == 'r')
+        {
+            return 500;
+        }
+        else if (piece == 'Q' || piece == 'q')
+        {
+            return 900;
+        }
+        return 0;
 
+    }
 }
