@@ -47,7 +47,7 @@ class Globals
             };
     public struct Entry
     {
-        public Entry(int value, int depth, Move mv)
+        public Entry(int value, int depth, Move mv, bool trueValue)
         {
             //Do i need true value? just did alpha/beta for checkers
             //this.alpha = alpha;
@@ -55,16 +55,19 @@ class Globals
             this.depth = depth;
             this.value = value;
             this.mv = mv;
+            this.trueValue = trueValue;
             //this.key = key;
             //this.board = board;
         }
         
         //public int alpha { get; set; }
         //public int beta { get; set; }
-        public int depth { get; set; }
+        public int depth { get; set; } 
         public int value { get; set; }
 
         public Move mv { get; set; }
+
+        public bool trueValue { get; set; }
 
     }
 
@@ -214,15 +217,27 @@ class Globals
     public static int[] kingSquaresEnd = new int[64]
     {
         -50,-40,-30,-20,-20,-30,-40,-50,
-        -30,-20,-10,  0,  0,-10,-20,-30,
+        -40,-30, 0,  0,  0, 0, -30, -40,
         -30,-10, 20, 30, 30, 20,-10,-30,
         -30,-10, 30, 40, 40, 30,-10,-30,
         -30,-10, 30, 40, 40, 30,-10,-30,
         -30,-10, 20, 30, 30, 20,-10,-30,
-        -30,-30,  0,  0,  0,  0,-30,-30,
-        -50,-30,-30,-30,-30,-30,-30,-50
+        -40,-30,  0,  0,  0,  0,-30,-40,
+        -50,-40,-30,-20,-20,-30,-40,-50
+    };
+
+    public static int[] cornerKingSquares = new int[64]
+    {
+        -100,-80,-60,-20,-20,-60,-80,-100,
+        -80,-60, 0,  0,  0, 0, -60, -80,
+        -60,-10, 20, 30, 30, 20,-10,-60,
+        -30,-10, 30, 40, 40, 30,-10,-30,
+        -30,-10, 30, 40, 40, 30,-10,-30,
+        -60,-10, 20, 30, 30, 20,-10,-60,
+        -80,-60,  0,  0,  0,  0,-60,-80,
+        -100,-80,-60,-20,-20,-60,-80,-100
     };
 
 
-    
+
 }

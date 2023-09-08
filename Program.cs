@@ -19,8 +19,9 @@ namespace ChessBot
 {
     class Program
     {
-        static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance
-        public struct Move
+        static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
+        
+        public class Move //probably refactor thid to globals
         {
             public Move(int s, int d, char p)
             {
@@ -31,6 +32,12 @@ namespace ChessBot
                 capPassant = -1; //sqaure of captured en passant piece
                 castleFrom = -1; //rook square before castle
                 castleTo = -1; //rook square after castle
+                moveVal = 0;
+            }
+
+            public Move()
+            {
+
             }
             public bool enPassant { get; set; }
             public int castleFrom { get; set; }
@@ -39,6 +46,8 @@ namespace ChessBot
             public int source { get; }
             public int dest { get; }
             public char promotion { get; }
+
+            public int moveVal { get; set; } //move value for move ordering
         }
 
         public struct test
@@ -145,10 +154,14 @@ namespace ChessBot
                         int depth = 5; //temp hardcoded value
                         Move bestMove = new Move();
                         List<Move> moves = new List<Move>();
-
+                        timer.Start();
+                        //DateTime t1 = DateTime.Now;
+                        //DateTime t2 = DateTime.Now;
+                        
+                        //Console.WriteLine(depth);
                         if (color == 'b') //minimizing
                         {
-                            int minEval = int.MaxValue;
+                            int minEval = 60000; //arbitrary max
                             MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
                             MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
                             MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
@@ -156,7 +169,7 @@ namespace ChessBot
                             MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                             MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
                             MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-                            
+
                             for (int i = 0; i < moves.Count; i++)
                             {
                                 char[] tempBoard = new char[64];
@@ -213,7 +226,7 @@ namespace ChessBot
                                     //validMoves.Add(moves[i]); 
                                     newHash = Zobrist.computeHash(tempBoard);
                                     int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue, newHash);
-                                    if(temp < minEval)
+                                    if (temp < minEval)
                                     {
                                         bestMove = moves[i];
                                         minEval = Math.Min(temp, minEval);
@@ -221,11 +234,11 @@ namespace ChessBot
                                 }
                                 board.CopyTo(tempBoard, 0);
                             }
-  
+                            //Console.WriteLine(minEval);
                         }
                         else //maximizing
                         {
-                            int maxEval = int.MinValue;
+                            int maxEval = -60000; //arbitrary min
                             MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
                             MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
                             MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
@@ -233,7 +246,7 @@ namespace ChessBot
                             MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
                             MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
                             MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-                            
+
                             for (int i = 0; i < moves.Count; i++)
                             {
                                 char[] tempBoard = new char[64];
@@ -275,7 +288,7 @@ namespace ChessBot
                                 {
                                     ulong newEnPassant = 0;
                                     ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
-                                                                          //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                                                                            //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
                                     if (moves[i].enPassant)
                                     {
                                         newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
@@ -300,7 +313,7 @@ namespace ChessBot
                                 }
                                 board.CopyTo(tempBoard, 0);
                             }
-                            
+
                         }
                         if (bestMove.promotion == ' ') //promotion move
                         {
@@ -315,6 +328,11 @@ namespace ChessBot
                         {
                             Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);
                         }*/
+                        
+
+                        timer.Stop();
+                        Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Depth: " + depth);
+                        timer.Reset();
                         whiteTable.Clear();
                         blackTable.Clear();
                         break;
@@ -326,6 +344,8 @@ namespace ChessBot
                         Console.WriteLine("\nHash: " + Zobrist.computeHash(board));
                         break;
                     case "t":
+                        //check moves for position
+                        /*
                         List<Move> testMoves = new List<Move>();
                         if(color == 'b')
                         {
@@ -384,7 +404,10 @@ namespace ChessBot
                         {
                             Console.WriteLine("No moves");
                         }
-                        
+                        */
+                        //checking isSquareAttacked function
+                        int kingSrc = BitOperations.TrailingZeroCount(wKing);
+                        Console.WriteLine(Position.isSquareAttacked(kingSrc, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'));
                         break;
                     case "test":
                         //run through perft tests
@@ -477,8 +500,23 @@ namespace ChessBot
                         if (tokens[1] == "fen") //game from fen
                         {
                             Board.updateFromFen(tokens[2], board);
-                            color = tokens[3][0];
                             int idx = Array.IndexOf(tokens, "moves") + 1;
+                            color = tokens[3][0];
+                            if (idx != -1) //no moves yet
+                            {
+                                if (tokens[idx..].Length % 2 == 1)
+                                {
+                                    if(color == 'w')
+                                    {
+                                        color = 'b';
+                                    }
+                                    else
+                                    {
+                                        color = 'w';
+                                    }
+                                }
+                            }
+                            
                             if (idx < tokens.Length && idx > 0) 
                             {
                                 Board.updateBoard(tokens[idx..], board, ref enP, ref castleRights);
