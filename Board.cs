@@ -1,5 +1,6 @@
 ﻿using System;
 using static ChessBot.Program;
+using static Globals;
 class Board
 {
     //BOARD INIT FUNCTIONS
@@ -178,6 +179,16 @@ class Board
             {
                 castleRights ^= (ulong)1 << getCellNumber(moves[i].Substring(2, 2));
             }
+            ulong currHash = Zobrist.computeHash(board);
+            if (repetition.ContainsKey(currHash))
+            {
+                repetition[currHash]++;
+            }
+            else
+            {
+                repetition.Add(currHash, 1);
+            }
+            
         }
         //printBoard(board);
     }

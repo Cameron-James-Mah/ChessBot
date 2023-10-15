@@ -592,6 +592,15 @@ class MoveGen
 
     }
 
+
+    /*
+     * CAPTURE MOVE GEN FOR QUIESCENCE
+     */
+
+    public static void getPawnCaptures(ref List<Move> moves, ulong enemyPieces, ulong myPawn)
+    {
+
+    }
 }
 
 
