@@ -77,6 +77,8 @@ class Globals
     //public static ulong whiteHash = Zobrist.NextUInt64(new Random());
     //public static ulong blackHash = Zobrist.NextUInt64(new Random());
 
+    public static Dictionary<ulong, int> repetition = new Dictionary<ulong, int>(); //<board hash, occurences>for checking threefold repetition as i am iterative over moves of given position increment occurence of hash position
+
     /*
      * 
      * 0, 0, 0, 0, 0, 0, 0, 0,
@@ -163,12 +165,12 @@ class Globals
          -5,  0,  0,  0,  0,  0,  0, -5,
          -5,  0,  0,  0,  0,  0,  0, -5,
          -5,  0,  0,  0,  0,  0,  0, -5,
-          0,  0,  0,  5,  5,  0,  0,  0
+          0,  2,  3,  5,  5,  3,  2,  0
     };
 
     public static int[] rookSquaresB = new int[64]
     {
-        0,  0,  0,  5,  5,  0,  0,  0,
+        0,  2,  3,  5,  5,  3,  2,  0,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
@@ -239,5 +241,6 @@ class Globals
     };
 
 
-
+    public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
+    
 }

@@ -119,8 +119,23 @@ namespace ChessBot
                 'R','N','B','Q','K','B','N','R'
             };
 
-            AttackTables.generateTables();
+            AttackTables.generateTables(); //generate bitboard attack tables
+            //piece square table for move ordering
             
+            pieceTables.Add('p', pawnSquaresB);
+            pieceTables.Add('P', pawnSquaresW);
+            pieceTables.Add('n', knightSquares);
+            pieceTables.Add('N', knightSquares);
+            pieceTables.Add('b', bishopSquaresB);
+            pieceTables.Add('B', bishopSquaresW);
+            pieceTables.Add('r', rookSquaresB);
+            pieceTables.Add('R', rookSquaresW);
+            pieceTables.Add('q', queenSquares);
+            pieceTables.Add('Q', queenSquares);
+            pieceTables.Add('k', kingSquaresMiddleB);
+            pieceTables.Add('K', kingSquaresMiddleW);
+
+
             while (true)
             {
                 string command = Console.ReadLine();
@@ -151,7 +166,7 @@ namespace ChessBot
                         Console.WriteLine(newH);
                         Console.WriteLine(Zobrist.computeHash(board2));
                         Console.WriteLine();*/
-                        int depth = 5; //temp hardcoded value
+                        int depth = 6; //temp hardcoded value
                         Move bestMove = new Move();
                         List<Move> moves = new List<Move>();
                         timer.Start();
@@ -231,6 +246,7 @@ namespace ChessBot
                                         bestMove = moves[i];
                                         minEval = Math.Min(temp, minEval);
                                     }
+                                    blackTable[newHash] = new Entry(minEval, depth, moves[i], false);
                                 }
                                 board.CopyTo(tempBoard, 0);
                             }
@@ -309,13 +325,13 @@ namespace ChessBot
                                         bestMove = moves[i];
                                         maxEval = Math.Max(temp, maxEval);
                                     }
-
+                                    whiteTable[newHash] = new Entry(maxEval, depth, moves[i], false);
                                 }
                                 board.CopyTo(tempBoard, 0);
                             }
 
                         }
-                        if (bestMove.promotion == ' ') //promotion move
+                        if (bestMove.promotion != ' ') //promotion move
                         {
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);
                         }
@@ -485,7 +501,7 @@ namespace ChessBot
                         enPassant = 0;
                         Zobrist.initialise();
                         Zobrist.initTable();
-                        
+                        repetition.Clear();
                         board = new char[64] {
                             'r','n','b','q','k','b','n','r',
                             'p','p','p','p','p','p','p','p',
@@ -566,6 +582,11 @@ namespace ChessBot
                                     ref wPawn, ref wRook, ref wKnight, ref wBishop, ref wQueen, ref wKing,
                                     ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                         //Console.WriteLine(Convert.ToString((long)bPawn, 2));
+                        /*
+                        foreach(var obj in repetition)
+                        {
+                            Console.WriteLine(obj.Key + ": " + obj.Value);
+                        }*/
                         break;
                     case "perft":
                         perftValue = int.Parse(tokens[1]);

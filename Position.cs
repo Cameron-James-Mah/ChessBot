@@ -288,154 +288,15 @@ public class Position
         }
         return nodes;
     }
-    /*
-    public static ulong perft2(int depth, ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen, ulong bKing,
-                                         ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen, ulong wKing,
-                                         ulong allPieces, ulong empty, char[] board, ulong whitePieces, ulong blackPieces,
-                                         ulong castleRights, ulong enPassant, char color)
-    {
-
-        ulong nodes = 0;
-        if (depth == 0)
-        {
-            return 1;
-        }
-        if (color == 'b')
-        {
-            List<Move> moves = new List<Move>();
-            MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
-            MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
-            MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
-            MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
-            MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
-            MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
-            MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-            char[] tempBoard = new char[64];
-            board.CopyTo(tempBoard, 0);
-            for (int i = 0; i < moves.Count; i++)
-            {
-                if (moves[i].promotion != ' ')
-                {
-                    tempBoard[63 - moves[i].dest] = moves[i].promotion;
-                }
-                else
-                {
-                    tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
-                }
-                if (moves[i].capPassant >= 0)
-                {
-                    tempBoard[63 - moves[i].capPassant] = ' ';
-                }
-                if (moves[i].castleFrom >= 0) //update rook position when castling
-                {
-                    tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
-                    tempBoard[63 - moves[i].castleFrom] = ' ';
-                }
-                tempBoard[63 - moves[i].source] = ' ';
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(bKing);
-                if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
-                {
-
-                    ulong newEnPassant = 0;
-                    ulong newCastleRights = castleRights;
-                    //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
-                    if (moves[i].enPassant)
-                    {
-                        newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
-                    }
-                    else
-                    {
-                        newEnPassant = 0;
-                    }
-                    if ((castleRights & ((ulong)1 << moves[i].source)) > 0)
-                    {
-                        newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
-                    }
-                    //validMoves.Add(moves[i]); 
-                    ulong temp = perft2(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w');
-                    nodes += temp;
-                    if (depth == perftValue)
-                    {
-                        Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
-                    }
-                }
-                board.CopyTo(tempBoard, 0);
-            }
-        }
-        else
-        {
-            List<Move> moves = new List<Move>();
-            MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
-            MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
-            MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
-            MoveGen.getRookMoves(ref moves, blackPieces, wRook, allPieces);
-            MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
-            MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
-            MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-            char[] tempBoard = new char[64];
-            board.CopyTo(tempBoard, 0);
-            for (int i = 0; i < moves.Count; i++)
-            {
-                if (moves[i].promotion != ' ')
-                {
-                    tempBoard[63 - moves[i].dest] = moves[i].promotion;
-                }
-                else
-                {
-                    tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
-                }
-                if (moves[i].capPassant >= 0)
-                {
-                    tempBoard[63 - moves[i].capPassant] = ' ';
-                }
-                if (moves[i].castleFrom >= 0)
-                {
-                    tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
-                    tempBoard[63 - moves[i].castleFrom] = ' ';
-                }
-                tempBoard[63 - moves[i].source] = ' ';
-
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(wKing);
-                if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
-                {
-                    ulong newEnPassant = 0;
-                    ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
-                                                          //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
-                    if (moves[i].enPassant)
-                    {
-                        newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
-                    }
-                    else //RECENTLY ADDED THIS ON A WHIM, DOUBLE CHECK
-                    {
-                        newEnPassant = 0;
-                    }
-                    if ((castleRights & ((ulong)1 << moves[i].source)) > 0) //if castling move then update castleRights, I THINK THIS IS MY ISSUE 
-                    {
-                        newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
-                        //printBitBoard(newCastleRights);
-                    }
-
-                    ulong temp = perft2(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b');
-                    if (depth == perftValue)
-                    {
-                        Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
-                    }
-                    nodes += temp;
-                }
-                board.CopyTo(tempBoard, 0);
-            }
-        }
-        return nodes;
-    }
-    */
+    
    
 
     //white wants max eval, black wants min eval
-    //maybe at final depth, do another minimax for only captures to fully calculate trade of pieces
+    public static int quiescence(int alpha, int beta, char[] board)
+    {
+
+        return 0;
+    }
     public static int minimax(int depth, ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen, ulong bKing,
                                          ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen, ulong wKing,
                                          ulong allPieces, ulong empty, char[] board, ulong whitePieces, ulong blackPieces,
@@ -444,6 +305,10 @@ public class Position
         if (depth == 0)
         {
             return eval(board, color);
+        }
+        if(repetition.ContainsKey(currHash) && repetition[currHash] == 2) //3 move repetition
+        {
+            return 0;
         }
         List<Move> moves = new List<Move>();
         if (color == 'b') //minimizing, black to move
@@ -908,18 +773,24 @@ public class Position
             int moveScore = 0;
             int pieceVal = getPieceValue(board[63-moves[i].source]);
             int captureVal = getPieceValue(board[63 - moves[i].dest]);
-            if(captureVal > 0)
+            if(captureVal > 0) //if capturing piece
             {
-                moveScore = 10*captureVal - pieceVal;
+                moveScore = 10*captureVal - pieceVal; 
+            }
+            else
+            {
+                moveScore = pieceTables[board[63 - moves[i].source]][63 - moves[i].dest] - (pieceTables[board[63 - moves[i].source]][63 - moves[i].source]+100);
             }
             if (moves[i].promotion != ' ')
             {
-                moveScore += getPieceValue(moves[i].promotion);
+                moveScore += getPieceValue(moves[i].promotion)*10;
             }
-            if( (((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1)
+            if( (((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1) //moving piece to enemy pawn attack range, generally not a good move
             {
                 moveScore -= pieceVal;
             }
+            //make sure to account for king squares
+            
             moves[i].moveVal = moveScore;
         }
         //order after
