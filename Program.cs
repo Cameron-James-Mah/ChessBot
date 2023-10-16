@@ -422,8 +422,10 @@ namespace ChessBot
                         }
                         */
                         //checking isSquareAttacked function
+                        /*
                         int kingSrc = BitOperations.TrailingZeroCount(wKing);
-                        Console.WriteLine(Position.isSquareAttacked(kingSrc, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'));
+                        Console.WriteLine(Position.isSquareAttacked(kingSrc, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'));*/
+
                         break;
                     case "test":
                         //run through perft tests
@@ -597,6 +599,12 @@ namespace ChessBot
                         Console.WriteLine("\nElapsed time: "+timer.Elapsed.ToString());
                         timer.Reset();
                         perftValue = -1;
+                        break;
+                    case "attacks":
+                        for(int i = 0; i < 64; i++)
+                        {
+                            printBitBoard(pawnAttacksW[i]);
+                        }
                         break;
                     
                     default:

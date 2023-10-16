@@ -785,12 +785,12 @@ public class Position
             {
                 moveScore += getPieceValue(moves[i].promotion)*10;
             }
-            if( (((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1) //moving piece to enemy pawn attack range, generally not a good move
+            if ((((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1) //moving piece to enemy pawn attack range, generally not a good move
             {
                 moveScore -= pieceVal;
             }
             //make sure to account for king squares
-            
+
             moves[i].moveVal = moveScore;
         }
         //order after
