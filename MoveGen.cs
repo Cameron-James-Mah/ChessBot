@@ -58,8 +58,46 @@ class MoveGen
                 //newMove.dest = lsb;
                 moves.Add(newMove);
             }
+            
+            //captures
+            ulong myP = myPawns;
+            while(myP != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(myP);
+                ulong pawnCaps = pawnAttacksB[lsb] & enemyPieces;
+                while(pawnCaps != 0)
+                {
+                    int pb = BitOperations.TrailingZeroCount(pawnCaps);
+                    if (((ulong)1 << pb & row0) > 0)
+                    {
+                        moves.Add(new Move(lsb, pb, 'r'));
+                        moves.Add(new Move(lsb, pb, 'n'));
+                        moves.Add(new Move(lsb, pb, 'b'));
+                        moves.Add(new Move(lsb, pb, 'q'));
+                    }
+                    else
+                    {
+                        if ((((ulong)1 << pb) & enPassant) > 0)
+                        {
+                            Move newMove = new Move(lsb, pb, ' ');
+                            newMove.capPassant = pb + 8;
+                            moves.Add(newMove);
+                        }
+                        else
+                        {
+                            Move newMove = new Move(lsb, pb, ' ');
+                            moves.Add(newMove);
+                        }
+
+                    }
+                    pawnCaps = ((ulong)1 << pb) ^ pawnCaps;
+                    
+                }
+                myP = ((ulong)1 << lsb) ^ myP;
+            }
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //east captures
+            /*
             pawnsDest = myPawns >> 9;
             pawnsDest &= enemyPieces;
             pawnsDest &= notAFile;
@@ -122,7 +160,7 @@ class MoveGen
                     }
                     
                 }
-            }
+            }*/
         }
         else if(color == 'w')
         {
@@ -166,6 +204,44 @@ class MoveGen
                 //newMove.dest = lsb;
                 moves.Add(newMove);
             }
+            //captures
+
+            ulong myP = myPawns;
+            while (myP != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(myP);
+                ulong pawnCaps = pawnAttacksW[lsb] & enemyPieces;
+                while (pawnCaps != 0)
+                {
+                    int pb = BitOperations.TrailingZeroCount(pawnCaps);
+                    if (((ulong)1 << pb & row7) > 0)
+                    {
+                        moves.Add(new Move(lsb, pb, 'R'));
+                        moves.Add(new Move(lsb, pb, 'N'));
+                        moves.Add(new Move(lsb, pb, 'B'));
+                        moves.Add(new Move(lsb, pb, 'Q'));
+                    }
+                    else
+                    {
+                        if ((((ulong)1 << pb) & enPassant) > 0)
+                        {
+                            Move newMove = new Move(lsb, pb, ' ');
+                            newMove.capPassant = pb - 8;
+                            moves.Add(newMove);
+                        }
+                        else
+                        {
+                            Move newMove = new Move(lsb, pb, ' ');
+                            moves.Add(newMove);
+                        }
+
+                    }
+                    pawnCaps = ((ulong)1 << pb) ^ pawnCaps;
+
+                }
+                myP = ((ulong)1 << lsb) ^ myP;
+            }
+            /*
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //west captures
             pawnsDest = myPawns << 9;
@@ -228,7 +304,7 @@ class MoveGen
                         moves.Add(newMove);
                     }
                 }
-            }
+            }*/
         }
         
         

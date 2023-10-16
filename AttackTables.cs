@@ -12,6 +12,8 @@ public class AttackTables
             generateBishopAttacks(i);
             generateRookAttacks(i);
             kingAttacks[i] = generateKingAttacks(i);
+            generatePawnAttacksW(i);
+            generatePawnAttacksB(i);
         }
     }
 
@@ -20,6 +22,44 @@ public class AttackTables
         ulong temp = 1;
         temp <<= source;
         b |= temp;
+    }
+
+    public static void generatePawnAttacksW(int source)
+    {
+        ulong attacks = 0;
+        ulong bitboard = 0;
+        setBit(ref bitboard, source);
+        //east capture
+        if(((bitboard << 7) & notAFile) > 0)
+        {
+            attacks |= bitboard << 7;
+        }
+        //west capture
+        if (((bitboard << 9) & notHFile) > 0)
+        {
+            attacks |= bitboard << 9;
+        }
+        pawnAttacksW[source] = attacks;
+        
+    }
+
+    public static void generatePawnAttacksB(int source)
+    {
+        ulong attacks = 0;
+        ulong bitboard = 0;
+        setBit(ref bitboard, source);
+        //east capture
+        if (((bitboard >> 9) & notAFile) > 0)
+        {
+            attacks |= bitboard >> 9;
+        }
+        //west capture
+        if (((bitboard >> 7) & notHFile) > 0)
+        {
+            attacks |= bitboard >> 7;
+        }
+        pawnAttacksB[source] = attacks;
+
     }
 
     //piece attack boards
@@ -112,7 +152,6 @@ public class AttackTables
             offset += 7;
         }
         bishopAttacks[source, 3] = attacks;
-        attacks = 0;
     }
 
     public static void generateRookAttacks(int source)
