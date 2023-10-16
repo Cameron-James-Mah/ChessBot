@@ -32,6 +32,8 @@ class Globals
     public static ulong[,] bishopAttacks = new ulong[64, 4]; //0 = SW, 1 = SE, 2 = NW, 3 = NE
     public static ulong[,] rookAttacks = new ulong[64, 4]; //0 = S, 1 = E, 2 = W, 3 = N
     public static ulong[] kingAttacks = new ulong[64];
+    public static ulong[] pawnAttacksW = new ulong[64];
+    public static ulong[] pawnAttacksB = new ulong[64];
 
     public static int perftValue = -1;
     //for converting square number(bit index from left of bitboard) to notation
