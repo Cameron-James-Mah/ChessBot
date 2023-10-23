@@ -383,11 +383,7 @@ class Board
             {
                 repetition.Add(currHash, 1);
             }
-<<<<<<< Updated upstream
-            
-=======
 
->>>>>>> Stashed changes
         }
         //printBoard(board);
     }

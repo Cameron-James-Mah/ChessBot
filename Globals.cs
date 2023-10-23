@@ -244,9 +244,5 @@ class Globals
 
 
     public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
-<<<<<<< Updated upstream
-    
-=======
 
->>>>>>> Stashed changes
 }

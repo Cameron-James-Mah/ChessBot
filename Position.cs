@@ -333,13 +333,8 @@ public class Position
         }
         return nodes;
     }
-<<<<<<< Updated upstream
-    
-   
-=======
 
 
->>>>>>> Stashed changes
 
     //white wants max eval, black wants min eval
     public static int quiescence(int alpha, int beta, char[] board)
@@ -356,11 +351,7 @@ public class Position
         {
             return eval(board, color);
         }
-<<<<<<< Updated upstream
-        if(repetition.ContainsKey(currHash) && repetition[currHash] == 2) //3 move repetition
-=======
         if (repetition.ContainsKey(currHash) && repetition[currHash] == 2) //3 move repetition
->>>>>>> Stashed changes
         {
             return 0;
         }
@@ -869,23 +860,6 @@ public class Position
         for (int i = 0; i < moves.Count; i++)
         {
             int moveScore = 0;
-<<<<<<< Updated upstream
-            int pieceVal = getPieceValue(board[63-moves[i].source]);
-            int captureVal = getPieceValue(board[63 - moves[i].dest]);
-            if(captureVal > 0) //if capturing piece
-            {
-                moveScore = 10*captureVal - pieceVal; 
-            }
-            else
-            {
-                moveScore = pieceTables[board[63 - moves[i].source]][63 - moves[i].dest] - (pieceTables[board[63 - moves[i].source]][63 - moves[i].source]+100);
-            }
-            if (moves[i].promotion != ' ')
-            {
-                moveScore += getPieceValue(moves[i].promotion)*10;
-            }
-            if ((((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1) //moving piece to enemy pawn attack range, generally not a good move
-=======
             int pieceVal = getPieceValue(board[63 - moves[i].source]);
             int captureVal = pieceValueOrder(board[63 - moves[i].dest]);
             if (captureVal > 0) //if capturing piece
@@ -898,16 +872,11 @@ public class Position
             }
 
             if ((((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 0) //moving piece to enemy pawn attack range, generally not a good move
->>>>>>> Stashed changes
             {
                 moveScore -= pieceVal;
             }
             //make sure to account for king squares
-<<<<<<< Updated upstream
-
-=======
             moveScore += pieceTables[board[63 - moves[i].source]][63 - moves[i].dest] - (pieceTables[board[63 - moves[i].source]][63 - moves[i].source] + 100);
->>>>>>> Stashed changes
             moves[i].moveVal = moveScore;
         }
         //order after
