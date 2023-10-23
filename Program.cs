@@ -20,7 +20,7 @@ namespace ChessBot
     class Program
     {
         static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
-        
+
         public class Move //probably refactor thid to globals
         {
             public Move(int s, int d, char p)
@@ -62,7 +62,7 @@ namespace ChessBot
                 this.depth = depth;
             }
         }
-        
+
         public static void Main()
         {
             //piece bitboards
@@ -83,17 +83,17 @@ namespace ChessBot
             ulong allPieces = 0b_11111111_11111111_00000000_00000000_00000000_00000000_11111111_11111111; //update when needed, during move gen etc
             ulong empty = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000; //just update this to the NOT of all pieces when needed
 
-            
+
 
             ulong whitePieces = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
             ulong blackPieces = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 
             ulong enPassant = 0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000; //pawns that can be captured via en passant, 
             char color = 'b';
-            
+
             ulong castleRights = 0b_10001001_00000000_00000000_00000000_00000000_00000000_00000000_10001001; //track if pieces have been moved
 
-            
+
             //pawn = p, knight = n, bishop = b, rook = r, queen = q, king = k
             //I think board should be inverted?
             //a8 is msb and h1 is lsb
@@ -120,8 +120,13 @@ namespace ChessBot
             };
 
             AttackTables.generateTables(); //generate bitboard attack tables
+<<<<<<< Updated upstream
             //piece square table for move ordering
             
+=======
+                                           //piece square table for move ordering
+
+>>>>>>> Stashed changes
             pieceTables.Add('p', pawnSquaresB);
             pieceTables.Add('P', pawnSquaresW);
             pieceTables.Add('n', knightSquares);
@@ -172,7 +177,7 @@ namespace ChessBot
                         timer.Start();
                         //DateTime t1 = DateTime.Now;
                         //DateTime t2 = DateTime.Now;
-                        
+
                         //Console.WriteLine(depth);
                         if (color == 'b') //minimizing
                         {
@@ -304,7 +309,7 @@ namespace ChessBot
                                 {
                                     ulong newEnPassant = 0;
                                     ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
-                                                                            //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                                                                          //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
                                     if (moves[i].enPassant)
                                     {
                                         newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
@@ -344,7 +349,7 @@ namespace ChessBot
                         {
                             Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);
                         }*/
-                        
+
 
                         timer.Stop();
                         Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Depth: " + depth);
@@ -361,7 +366,7 @@ namespace ChessBot
                         break;
                     case "t":
                         //check moves for position
-                        /*
+                        
                         List<Move> testMoves = new List<Move>();
                         if(color == 'b')
                         {
@@ -420,7 +425,7 @@ namespace ChessBot
                         {
                             Console.WriteLine("No moves");
                         }
-                        */
+                        
                         //checking isSquareAttacked function
                         /*
                         int kingSrc = BitOperations.TrailingZeroCount(wKing);
@@ -442,7 +447,7 @@ namespace ChessBot
                         tests.Add(new test("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 3605103, 5));
                         int en = -1;
                         timer.Start();
-                        for(int i = 0; i < tests.Count; i++)
+                        for (int i = 0; i < tests.Count; i++)
                         {
                             string res = "";
                             string[] fen = tests[i].fen.Trim().Split();
@@ -474,8 +479,8 @@ namespace ChessBot
                             }
                             ulong curr = perft(tests[i].depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color);
-                            res += "\n"+tests[i].fen +" Expected nodes: " + tests[i].result + " Traversed nodes: " + curr;
-                            if(curr == tests[i].result)
+                            res += "\n" + tests[i].fen + " Expected nodes: " + tests[i].result + " Traversed nodes: " + curr;
+                            if (curr == tests[i].result)
                             {
                                 res += " TEST PASSED";
                                 testsPassed++;
@@ -486,7 +491,7 @@ namespace ChessBot
                             }
                             Console.WriteLine(res);
                         }
-                        if(testsPassed == tests.Count)
+                        if (testsPassed == tests.Count)
                         {
                             Console.WriteLine("\nALL TESTS PASSED\n");
                         }
@@ -524,7 +529,7 @@ namespace ChessBot
                             {
                                 if (tokens[idx..].Length % 2 == 1)
                                 {
-                                    if(color == 'w')
+                                    if (color == 'w')
                                     {
                                         color = 'b';
                                     }
@@ -534,8 +539,8 @@ namespace ChessBot
                                     }
                                 }
                             }
-                            
-                            if (idx < tokens.Length && idx > 0) 
+
+                            if (idx < tokens.Length && idx > 0)
                             {
                                 Board.updateBoard(tokens[idx..], board, ref enP, ref castleRights);
                             }
@@ -567,7 +572,7 @@ namespace ChessBot
                         {
                             string[] gameMoves = tokens[3..];
                             Board.updateBoard(gameMoves, board, ref enP, ref castleRights);
-                            if(gameMoves.Length % 2 == 1)
+                            if (gameMoves.Length % 2 == 1)
                             {
                                 color = 'b';
                             }
@@ -576,11 +581,11 @@ namespace ChessBot
                                 color = 'w';
                             }
                         }
-                        if(enP > 0)
+                        if (enP > 0)
                         {
                             enPassant |= ((ulong)1 << enP);
                         }
-                        Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, 
+                        Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing,
                                     ref wPawn, ref wRook, ref wKnight, ref wBishop, ref wQueen, ref wKing,
                                     ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                         //Console.WriteLine(Convert.ToString((long)bPawn, 2));
@@ -596,17 +601,25 @@ namespace ChessBot
                         Console.WriteLine("Nodes: " + perft(Int32.Parse(tokens[1]), bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color));
                         timer.Stop();
-                        Console.WriteLine("\nElapsed time: "+timer.Elapsed.ToString());
+                        Console.WriteLine("\nElapsed time: " + timer.Elapsed.ToString());
                         timer.Reset();
                         perftValue = -1;
                         break;
                     case "attacks":
+<<<<<<< Updated upstream
                         for(int i = 0; i < 64; i++)
+=======
+                        for (int i = 0; i < 64; i++)
+>>>>>>> Stashed changes
                         {
                             printBitBoard(pawnAttacksW[i]);
                         }
                         break;
+<<<<<<< Updated upstream
                     
+=======
+
+>>>>>>> Stashed changes
                     default:
                         //Debugger.Launch();
                         Console.WriteLine("No command");
