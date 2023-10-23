@@ -58,16 +58,6 @@ class MoveGen
                 //newMove.dest = lsb;
                 moves.Add(newMove);
             }
-<<<<<<< Updated upstream
-            
-            //captures
-            ulong myP = myPawns;
-            while(myP != 0)
-            {
-                int lsb = BitOperations.TrailingZeroCount(myP);
-                ulong pawnCaps = pawnAttacksB[lsb] & enemyPieces;
-                while(pawnCaps != 0)
-=======
             /*
             //captures
             ulong myP = myPawns;
@@ -76,7 +66,6 @@ class MoveGen
                 int lsb = BitOperations.TrailingZeroCount(myP);
                 ulong pawnCaps = pawnAttacksB[lsb] & enemyPieces;
                 while (pawnCaps != 0)
->>>>>>> Stashed changes
                 {
                     int pb = BitOperations.TrailingZeroCount(pawnCaps);
                     if (((ulong)1 << pb & row0) > 0)
@@ -102,15 +91,6 @@ class MoveGen
 
                     }
                     pawnCaps = ((ulong)1 << pb) ^ pawnCaps;
-<<<<<<< Updated upstream
-                    
-                }
-                myP = ((ulong)1 << lsb) ^ myP;
-            }
-            //pawn captures, en passant bits added to enemyPieces at beginning of function
-            //east captures
-            /*
-=======
 
                 }
                 myP = ((ulong)1 << lsb) ^ myP;
@@ -118,7 +98,6 @@ class MoveGen
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //east captures
             
->>>>>>> Stashed changes
             pawnsDest = myPawns >> 9;
             pawnsDest &= enemyPieces;
             pawnsDest &= notAFile;
@@ -181,7 +160,7 @@ class MoveGen
                     }
                     
                 }
-            }*/
+            }
         }
         else if (color == 'w')
         {
@@ -226,11 +205,7 @@ class MoveGen
                 moves.Add(newMove);
             }
             //captures
-<<<<<<< Updated upstream
-
-=======
             /*
->>>>>>> Stashed changes
             ulong myP = myPawns;
             while (myP != 0)
             {
@@ -265,13 +240,8 @@ class MoveGen
 
                 }
                 myP = ((ulong)1 << lsb) ^ myP;
-<<<<<<< Updated upstream
-            }
-            /*
-=======
             }*/
             
->>>>>>> Stashed changes
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //west captures
             pawnsDest = myPawns << 9;
@@ -334,7 +304,7 @@ class MoveGen
                         moves.Add(newMove);
                     }
                 }
-            }*/
+            }
         }
 
 

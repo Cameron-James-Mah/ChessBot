@@ -120,13 +120,8 @@ namespace ChessBot
             };
 
             AttackTables.generateTables(); //generate bitboard attack tables
-<<<<<<< Updated upstream
-            //piece square table for move ordering
-            
-=======
                                            //piece square table for move ordering
 
->>>>>>> Stashed changes
             pieceTables.Add('p', pawnSquaresB);
             pieceTables.Add('P', pawnSquaresW);
             pieceTables.Add('n', knightSquares);
@@ -606,20 +601,12 @@ namespace ChessBot
                         perftValue = -1;
                         break;
                     case "attacks":
-<<<<<<< Updated upstream
-                        for(int i = 0; i < 64; i++)
-=======
                         for (int i = 0; i < 64; i++)
->>>>>>> Stashed changes
                         {
                             printBitBoard(pawnAttacksW[i]);
                         }
                         break;
-<<<<<<< Updated upstream
-                    
-=======
 
->>>>>>> Stashed changes
                     default:
                         //Debugger.Launch();
                         Console.WriteLine("No command");

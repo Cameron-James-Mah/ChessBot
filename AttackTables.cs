@@ -30,11 +30,7 @@ public class AttackTables
         ulong bitboard = 0;
         setBit(ref bitboard, source);
         //east capture
-<<<<<<< Updated upstream
-        if(((bitboard << 7) & notAFile) > 0)
-=======
         if (((bitboard << 7) & notAFile) > 0)
->>>>>>> Stashed changes
         {
             attacks |= bitboard << 7;
         }
@@ -44,11 +40,7 @@ public class AttackTables
             attacks |= bitboard << 9;
         }
         pawnAttacksW[source] = attacks;
-<<<<<<< Updated upstream
-        
-=======
 
->>>>>>> Stashed changes
     }
 
     public static void generatePawnAttacksB(int source)
