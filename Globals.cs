@@ -74,8 +74,8 @@ class Globals
     }
 
     public static ulong[,] zobristTable = new ulong[12, 64]; //zobrist table
-    public static Dictionary<ulong, Entry> whiteTable = new Dictionary<ulong, Entry>(); //transposition table for white, should i maybe init with size and load factor later?
-    public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(); //transposition table for black, should i maybe init with size and load factor later?
+    public static Dictionary<ulong, Entry> whiteTable = new Dictionary<ulong, Entry>(2000000); //transposition table for white, should i maybe init with size and load factor later?
+    public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(2000000); //transposition table for black, should i maybe init with size and load factor later?
     //public static ulong whiteHash = Zobrist.NextUInt64(new Random());
     //public static ulong blackHash = Zobrist.NextUInt64(new Random());
 
