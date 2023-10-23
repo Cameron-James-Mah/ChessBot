@@ -144,7 +144,7 @@ public class Position
         return false;
     }
     //original perft function, made as simple as possible to make sure move generation works properly
-    
+
     //perft function for testing my move generation is correct, also testing performance 
     public static ulong perft(int depth, ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen, ulong bKing,
                                          ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen, ulong wKing,
@@ -167,32 +167,59 @@ public class Position
             MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
             MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
             MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-            char[] tempBoard = new char[64];
-            board.CopyTo(tempBoard, 0);
+            
             for (int i = 0; i < moves.Count; i++)
             {
+                ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
+                ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
+                char[] tempBoard = (char[])board.Clone();
                 if (moves[i].promotion != ' ')
                 {
                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, moves[i].promotion, moves[i].dest);
                 }
                 else
                 {
                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].dest);
                 }
                 if (moves[i].capPassant >= 0)
                 {
                     tempBoard[63 - moves[i].capPassant] = ' ';
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].capPassant], moves[i].capPassant);
                 }
                 if (moves[i].castleFrom >= 0) //update rook position when castling
                 {
                     tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
                     tempBoard[63 - moves[i].castleFrom] = ' ';
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleTo);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleFrom);
                 }
                 tempBoard[63 - moves[i].source] = ' ';
+                Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].source);
+
+                allPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2 | wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                empty = ~allPieces;
+                whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
+                /*
                 Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(bKing);
-                if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
+                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);*/
+                /*
+                Board.updateBoardsFromMove(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, ref allPieces, ref empty, ref whitePieces, ref blackPieces, board[63 - moves[i].source], board[63 - moves[i].dest], moves[i].source, moves[i].dest);*/
+                int kingSource = BitOperations.TrailingZeroCount(bKing2);
+                if (!isSquareAttacked(kingSource, wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
                 {
 
                     ulong newEnPassant = 0;
@@ -211,14 +238,13 @@ public class Position
                         newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
                     }
                     //validMoves.Add(moves[i]); 
-                    ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w');
+                    ulong temp = perft(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w');
                     nodes += temp;
                     if (depth == perftValue)
                     {
                         Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
                     }
                 }
-                board.CopyTo(tempBoard, 0);
             }
         }
         else
@@ -231,33 +257,53 @@ public class Position
             MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
             MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
             MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-            char[] tempBoard = new char[64];
-            board.CopyTo(tempBoard, 0);
+            //char[] tempBoard = new char[64];
             for (int i = 0; i < moves.Count; i++)
             {
+                ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
+                ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
+                char[] tempBoard = (char[])board.Clone();
                 if (moves[i].promotion != ' ')
                 {
                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, moves[i].promotion, moves[i].dest);
                 }
                 else
                 {
                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].dest);
                 }
                 if (moves[i].capPassant >= 0)
                 {
                     tempBoard[63 - moves[i].capPassant] = ' ';
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].capPassant], moves[i].capPassant);
                 }
                 if (moves[i].castleFrom >= 0)
                 {
                     tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
                     tempBoard[63 - moves[i].castleFrom] = ' ';
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleTo);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleFrom);
                 }
                 tempBoard[63 - moves[i].source] = ' ';
+                Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].source);
 
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(wKing);
-                if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                allPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2 | wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                empty = ~allPieces;
+                whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
+                int kingSource = BitOperations.TrailingZeroCount(wKing2);
+                if (!isSquareAttacked(kingSource, bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w'))
                 {
                     ulong newEnPassant = 0;
                     ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
@@ -276,20 +322,24 @@ public class Position
                         //printBitBoard(newCastleRights);
                     }
 
-                    ulong temp = perft(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b');
+                    ulong temp = perft(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b');
                     if (depth == perftValue)
                     {
                         Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest] + ": " + temp);
                     }
                     nodes += temp;
                 }
-                board.CopyTo(tempBoard, 0);
             }
         }
         return nodes;
     }
+<<<<<<< Updated upstream
     
    
+=======
+
+
+>>>>>>> Stashed changes
 
     //white wants max eval, black wants min eval
     public static int quiescence(int alpha, int beta, char[] board)
@@ -306,7 +356,11 @@ public class Position
         {
             return eval(board, color);
         }
+<<<<<<< Updated upstream
         if(repetition.ContainsKey(currHash) && repetition[currHash] == 2) //3 move repetition
+=======
+        if (repetition.ContainsKey(currHash) && repetition[currHash] == 2) //3 move repetition
+>>>>>>> Stashed changes
         {
             return 0;
         }
@@ -316,11 +370,11 @@ public class Position
             //Console.WriteLine("---------------------------------------------");
             //Console.WriteLine(currHash);
             //Board.printBoard(board);
-            if(blackTable.ContainsKey(currHash))
+            if (blackTable.ContainsKey(currHash))
             {
                 //if true value return true value
-                if(blackTable[currHash].depth >= depth)
-                { 
+                if (blackTable[currHash].depth >= depth)
+                {
                     if (blackTable[currHash].trueValue)
                     {
                         return blackTable[currHash].value;
@@ -333,14 +387,14 @@ public class Position
                     Console.WriteLine("Table board: " + blackTable[currHash].key + " Table Depth: " + blackTable[currHash].depth);
                     Board.printBoard(blackTable[currHash].board);
                     Console.WriteLine("---------------------------------------------");*/
-                    
+
                     if (beta <= alpha)
                     {
                         return beta;
                     }
                 }
-                
-                
+
+
             }
             int minEval = 60000; //arbitrary number
             int kingSquare = BitOperations.TrailingZeroCount(bKing);
@@ -357,9 +411,11 @@ public class Position
             //char[] tempBoard = new char[64];
             //board.CopyTo(tempBoard, 0);
             bool moved = false;
+            char[] tempBoard = new char[64];
             for (int i = 0; i < moves.Count; i++)
             {
-                char[] tempBoard = new char[64];
+                ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
+                ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                 board.CopyTo(tempBoard, 0);
                 ulong newHash = currHash;
                 newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
@@ -370,17 +426,27 @@ public class Position
                 if (moves[i].promotion != ' ')
                 {
                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
-                    newHash^=Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
+                    newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, moves[i].promotion, moves[i].dest);
                 }
                 else
                 {
                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
-                    newHash^=Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
+                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].dest);
                 }
                 if (moves[i].capPassant >= 0)
                 {
                     tempBoard[63 - moves[i].capPassant] = ' ';
-                    newHash^=Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
+                    newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].capPassant], moves[i].capPassant);
                 }
                 if (moves[i].castleFrom >= 0) //update rook position when castling
                 {
@@ -388,13 +454,22 @@ public class Position
                     tempBoard[63 - moves[i].castleFrom] = ' ';
                     newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
                     newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleTo);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleFrom);
                 }
                 tempBoard[63 - moves[i].source] = ' ';
+                Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].source);
+
+                allPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2 | wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                empty = ~allPieces;
+                whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
                 
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(bKing);
-                if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
+                int kingSource = BitOperations.TrailingZeroCount(bKing2);
+                if (!isSquareAttacked(kingSource, wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
                 {
                     moved = true;
                     ulong newEnPassant = 0;
@@ -428,7 +503,7 @@ public class Position
                     Console.WriteLine(newHash);
                     Console.WriteLine(currHash);
                     Console.WriteLine();*/
-                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash);
+                    int temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash);
                     minEval = Math.Min(temp, minEval);
                     beta = Math.Min(beta, minEval);
 
@@ -462,16 +537,16 @@ public class Position
                         return minEval;
                     }
                 }
-                
+
                 //Console.WriteLine(newHash);
             }
             //Console.WriteLine("\n\n");
             if (!moved) //no valid moves 
             {
                 //int kingSource = BitOperations.TrailingZeroCount(bKing);
-                if(isSquareAttacked(kingSquare, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //checkmate
+                if (isSquareAttacked(kingSquare, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //checkmate
                 {
-                    minEval = 50000+depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
+                    minEval = 50000 + depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
                 }
                 else //stalemate
                 {
@@ -485,13 +560,13 @@ public class Position
             }
             //Board.printBoard(board);
             return minEval;
-    }
+        }
         else //maximizing, white to move
         {
             //Board.printBoard(board);
             if (whiteTable.ContainsKey(currHash) && whiteTable[currHash].depth >= depth)
-            { 
-                
+            {
+
                 if (whiteTable[currHash].trueValue)
                 {
                     return whiteTable[currHash].value;
@@ -503,7 +578,7 @@ public class Position
                 Console.WriteLine("Table board: " + whiteTable[currHash].key);
                 Board.printBoard(whiteTable[currHash].board);
                 Console.WriteLine("---------------------------------------------");*/
-                
+
                 if (beta <= alpha)
                 {
                     return alpha;
@@ -524,11 +599,12 @@ public class Position
             enemyPawnAttacks |= bPawn >> 9 & notAFile;
             orderMoves(ref moves, enemyPawnAttacks, ref board);
             bool moved = false;
-            
-            
+
+            char[] tempBoard = new char[64];
             for (int i = 0; i < moves.Count; i++)
             {
-                char[] tempBoard = new char[64];
+                ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
+                ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                 board.CopyTo(tempBoard, 0);
                 ulong newHash = currHash;
                 newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
@@ -540,16 +616,26 @@ public class Position
                 {
                     newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
                     tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, moves[i].promotion, moves[i].dest);
                 }
                 else
                 {
                     tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
                     newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].dest], moves[i].dest);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].dest);
                 }
                 if (moves[i].capPassant >= 0)
                 {
                     tempBoard[63 - moves[i].capPassant] = ' ';
                     newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].capPassant], moves[i].capPassant);
                 }
                 if (moves[i].castleFrom >= 0)
                 {
@@ -557,14 +643,22 @@ public class Position
                     tempBoard[63 - moves[i].castleFrom] = ' ';
                     newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
                     newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
+                    Board.addBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleTo);
+                    Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].castleFrom], moves[i].castleFrom);
                 }
-                
-                tempBoard[63 - moves[i].source] = ' ';
 
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                int kingSource = BitOperations.TrailingZeroCount(wKing);
-                if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                tempBoard[63 - moves[i].source] = ' ';
+                Board.removeBitboardPiece(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
+                    ref wQueen2, ref wKing2, board[63 - moves[i].source], moves[i].source);
+
+                allPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2 | wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                empty = ~allPieces;
+                whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
+                blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
+                int kingSource = BitOperations.TrailingZeroCount(wKing2);
+                if (!isSquareAttacked(kingSource, bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w'))
                 {
                     moved = true;
                     ulong newEnPassant = 0;
@@ -574,7 +668,7 @@ public class Position
                     {
                         newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
                     }
-                    else 
+                    else
                     {
                         newEnPassant = 0;
                     }
@@ -598,10 +692,10 @@ public class Position
                     Console.WriteLine(currHash);
                     Console.WriteLine();*/
 
-                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash);
+                    int temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash);
                     maxEval = Math.Max(maxEval, temp);
                     alpha = Math.Max(maxEval, alpha);
-                    if(beta <= alpha)
+                    if (beta <= alpha)
                     {
                         //if black table has entry or entry depth is below current depth
                         if (!whiteTable.ContainsKey(currHash) || whiteTable[currHash].depth < depth)
@@ -615,13 +709,13 @@ public class Position
                         return maxEval;
                     }
                 }
-                
+
             }
-            
+
             if (!moved) //no valid moves 
             {
                 //int kingSource = BitOperations.TrailingZeroCount(wKing); //THIS IS WHERE THE ISSUE IS
-                if(isSquareAttacked(kingSquare, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w')) //black must have checkmated white
+                if (isSquareAttacked(kingSquare, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w')) //black must have checkmated white
                 {
                     maxEval = -50000 - depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
                     //Board.printBoard(board);
@@ -636,18 +730,18 @@ public class Position
                     //Board.printBoard(board);
                     return 0;
                 }
-                
+
             }
             if (!whiteTable.ContainsKey(currHash) || whiteTable[currHash].depth < depth)
             {
                 whiteTable[currHash] = new Entry(maxEval, depth, new Move(), true); //true value 
             }
-                
+
             return maxEval;
         }
     }
 
-    
+
     public static int eval(char[] board, char color)
     {
         int pawn = 100; //P/p
@@ -670,8 +764,12 @@ public class Position
         int bFile = 0;
         int rank = 0;
         int file = 0;
-        for(int i = 0; i < board.Length; i++)
+        for (int i = 0; i < board.Length; i++)
         {
+            if (board[i] == ' ')
+            {
+                continue;
+            }
             //white pieces
             if (board[i] == 'P')
             {
@@ -729,7 +827,7 @@ public class Position
                 blackEval += queen + queenSquares[i];
                 blackMaterial += queen;
             }
-            
+
             else if (board[i] == 'k')
             {
                 bKingIdx = i;
@@ -737,13 +835,13 @@ public class Position
                 bRank = rank;
             }
             file++;
-            if(file == 8)
+            if (file == 8)
             {
                 rank++;
                 file = 0;
             }
         }
-        if(blackMaterial > 900 || whiteMaterial > 900)
+        if (blackMaterial > 900 || whiteMaterial > 900)
         {
             blackEval += king + kingSquaresMiddleB[bKingIdx];
             whiteEval += king + kingSquaresMiddleW[wKingIdx];
@@ -754,23 +852,24 @@ public class Position
             whiteEval += king + kingSquaresEnd[wKingIdx];
             int dist = Math.Abs((wFile - bFile)) + (Math.Abs((wRank - bRank)));
             dist *= 12;
-            if(color == 'b') //white just moved so advantage to white i think
+            if (color == 'b') //white just moved so advantage to white i think
             {
                 //whiteEval += cornerKingSquares[wKingIdx];
                 return whiteEval - (blackEval + dist);
             }
-            
-            return (whiteEval+dist) - blackEval;
+
+            return (whiteEval + dist) - blackEval;
         }
 
-        return whiteEval-blackEval;
+        return whiteEval - blackEval;
     }
 
     static void orderMoves(ref List<Move> moves, ulong enemyPawnAttacks, ref char[] board)
     {
-        for(int i = 0; i < moves.Count; i++)
+        for (int i = 0; i < moves.Count; i++)
         {
             int moveScore = 0;
+<<<<<<< Updated upstream
             int pieceVal = getPieceValue(board[63-moves[i].source]);
             int captureVal = getPieceValue(board[63 - moves[i].dest]);
             if(captureVal > 0) //if capturing piece
@@ -786,11 +885,29 @@ public class Position
                 moveScore += getPieceValue(moves[i].promotion)*10;
             }
             if ((((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 1) //moving piece to enemy pawn attack range, generally not a good move
+=======
+            int pieceVal = getPieceValue(board[63 - moves[i].source]);
+            int captureVal = pieceValueOrder(board[63 - moves[i].dest]);
+            if (captureVal > 0) //if capturing piece
+            {
+                moveScore = captureVal - pieceVal; 
+            }
+            if (moves[i].promotion != ' ')
+            {
+                moveScore += pieceValueOrder(moves[i].promotion);
+            }
+
+            if ((((ulong)1 << moves[i].dest) & enemyPawnAttacks) > 0) //moving piece to enemy pawn attack range, generally not a good move
+>>>>>>> Stashed changes
             {
                 moveScore -= pieceVal;
             }
             //make sure to account for king squares
+<<<<<<< Updated upstream
 
+=======
+            moveScore += pieceTables[board[63 - moves[i].source]][63 - moves[i].dest] - (pieceTables[board[63 - moves[i].source]][63 - moves[i].source] + 100);
+>>>>>>> Stashed changes
             moves[i].moveVal = moveScore;
         }
         //order after
@@ -807,7 +924,23 @@ public class Position
         int queen = 900; //Q/q
         int king = 2000; //K/k
          */
-        if(piece == 'P' || piece == 'p')
+        switch (piece)
+        {
+            case 'P': case 'p':
+                return 100;
+            case 'N': case 'n':
+                return 320;
+            case 'B': case 'b':
+                return 330;
+            case 'R': case 'r':
+                return 500;
+            case 'Q': case 'q':
+                return 900;
+            default:
+                return 0;
+        }
+        /*
+        if (piece == 'P' || piece == 'p')
         {
             return 100;
         }
@@ -827,7 +960,53 @@ public class Position
         {
             return 900;
         }
-        return 0;
+        return 0;*/
 
+    }
+
+    static int pieceValueOrder(char piece)
+    {
+        switch (piece)
+        {
+            case 'P':
+            case 'p':
+                return 500;
+            case 'N':
+            case 'n':
+                return 1600;
+            case 'B':
+            case 'b':
+                return 1650;
+            case 'R':
+            case 'r':
+                return 2500;
+            case 'Q':
+            case 'q':
+                return 4500;
+            default:
+                return 0;
+        }
+        /*
+        if (piece == 'P' || piece == 'p')
+        {
+            return 500;
+        }
+        else if (piece == 'N' || piece == 'n')
+        {
+            return 1600;
+        }
+        else if (piece == 'B' || piece == 'b')
+        {
+            return 1650;
+        }
+        else if (piece == 'R' || piece == 'r')
+        {
+            return 2500;
+        }
+        else if (piece == 'Q' || piece == 'q')
+        {
+            return 4500;
+        }
+        return 0;*/
     }
 }

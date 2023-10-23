@@ -16,7 +16,7 @@ class MoveGen
 
         enemyPieces |= enPassant; //add en passant moves to enemy pieces list since can be treated the same
         ulong pawnsDest = 0;
-        if(color == 'b')
+        if (color == 'b')
         {
             //single pushes
             pawnsDest = myPawns >> 8;
@@ -58,6 +58,7 @@ class MoveGen
                 //newMove.dest = lsb;
                 moves.Add(newMove);
             }
+<<<<<<< Updated upstream
             
             //captures
             ulong myP = myPawns;
@@ -66,6 +67,16 @@ class MoveGen
                 int lsb = BitOperations.TrailingZeroCount(myP);
                 ulong pawnCaps = pawnAttacksB[lsb] & enemyPieces;
                 while(pawnCaps != 0)
+=======
+            /*
+            //captures
+            ulong myP = myPawns;
+            while (myP != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(myP);
+                ulong pawnCaps = pawnAttacksB[lsb] & enemyPieces;
+                while (pawnCaps != 0)
+>>>>>>> Stashed changes
                 {
                     int pb = BitOperations.TrailingZeroCount(pawnCaps);
                     if (((ulong)1 << pb & row0) > 0)
@@ -91,6 +102,7 @@ class MoveGen
 
                     }
                     pawnCaps = ((ulong)1 << pb) ^ pawnCaps;
+<<<<<<< Updated upstream
                     
                 }
                 myP = ((ulong)1 << lsb) ^ myP;
@@ -98,6 +110,15 @@ class MoveGen
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //east captures
             /*
+=======
+
+                }
+                myP = ((ulong)1 << lsb) ^ myP;
+            }*/
+            //pawn captures, en passant bits added to enemyPieces at beginning of function
+            //east captures
+            
+>>>>>>> Stashed changes
             pawnsDest = myPawns >> 9;
             pawnsDest &= enemyPieces;
             pawnsDest &= notAFile;
@@ -162,7 +183,7 @@ class MoveGen
                 }
             }*/
         }
-        else if(color == 'w')
+        else if (color == 'w')
         {
             //single pushes
             pawnsDest = myPawns << 8;
@@ -205,7 +226,11 @@ class MoveGen
                 moves.Add(newMove);
             }
             //captures
+<<<<<<< Updated upstream
 
+=======
+            /*
+>>>>>>> Stashed changes
             ulong myP = myPawns;
             while (myP != 0)
             {
@@ -240,8 +265,13 @@ class MoveGen
 
                 }
                 myP = ((ulong)1 << lsb) ^ myP;
+<<<<<<< Updated upstream
             }
             /*
+=======
+            }*/
+            
+>>>>>>> Stashed changes
             //pawn captures, en passant bits added to enemyPieces at beginning of function
             //west captures
             pawnsDest = myPawns << 9;
@@ -306,11 +336,11 @@ class MoveGen
                 }
             }*/
         }
-        
-        
 
-        
-        
+
+
+
+
     }
     //(ref List<Move> moves, ulong enemyPieces, ulong myRooks, ulong empty, ulong allPieces)
     public static void getKnightMoves(ref List<Move> moves, ulong enemyPieces, ulong myKnights, ulong empty)
@@ -318,12 +348,12 @@ class MoveGen
         while (myKnights != 0)
         {
             int lsb = BitOperations.TrailingZeroCount(myKnights);
-            
+
             //printBitBoard(blackKnights);
-            ulong knightMoves = knightAttacks[lsb]&(empty | enemyPieces);
-                
+            ulong knightMoves = knightAttacks[lsb] & (empty | enemyPieces);
+
             //printBitBoard(blackKnights);
-                
+
             while (knightMoves != 0)
             {
                 int kb = BitOperations.TrailingZeroCount(knightMoves);
@@ -335,7 +365,7 @@ class MoveGen
             }
             myKnights = ((ulong)1 << lsb) ^ myKnights;
         }
-        
+
     }
     //(ref List<Move> moves, ulong enemyPieces, ulong myRooks, ulong empty, ulong allPieces)
     public static void getBishopMoves(ref List<Move> moves, ulong enemyPieces, ulong myBishops, ulong allPieces)
@@ -354,7 +384,7 @@ class MoveGen
             //SW
             ulong blockers = SWmoves & allPieces;
             int msb = 63 - BitOperations.LeadingZeroCount(blockers); //find first blocker
-                
+
             ulong validSquares = 0;
             if (msb >= 0 && msb < 64) //found blocker 
             {
@@ -372,7 +402,7 @@ class MoveGen
             {
                 validSquares = bishopAttacks[lsb, 0];
             }
-            while(validSquares != 0)
+            while (validSquares != 0)
             {
                 int bb = BitOperations.TrailingZeroCount(validSquares);
                 validSquares = ((ulong)1 << bb) ^ validSquares;
@@ -381,7 +411,7 @@ class MoveGen
                 //newMove.dest = bb;
                 moves.Add(newMove);
             }
-                
+
 
             //SE
             blockers = SEmoves & allPieces;
@@ -402,7 +432,7 @@ class MoveGen
             {
                 validSquares = bishopAttacks[lsb, 1];
             }
-                
+
             while (validSquares != 0)
             {
                 int bb = BitOperations.TrailingZeroCount(validSquares);
@@ -412,7 +442,7 @@ class MoveGen
                 //newMove.dest = bb;
                 moves.Add(newMove);
             }
-                
+
 
             //NW
             blockers = NWmoves & allPieces;
@@ -433,7 +463,7 @@ class MoveGen
             {
                 validSquares = bishopAttacks[lsb, 2];
             }
-                
+
             while (validSquares != 0)
             {
                 int bb = BitOperations.TrailingZeroCount(validSquares);
@@ -443,7 +473,7 @@ class MoveGen
                 //newMove.dest = bb;
                 moves.Add(newMove);
             }
-                
+
 
             //NE
             blockers = NEmoves & allPieces;
@@ -473,9 +503,9 @@ class MoveGen
                 //newMove.dest = bb;
                 moves.Add(newMove);
             }
-                
+
         }
-        
+
 
     }
 
@@ -618,7 +648,7 @@ class MoveGen
         }
     }
 
-    public static void getKingMoves(ref List<Move> moves, ulong enemyPieces, ulong myKing, ulong empty, ulong castleRights, ulong allPieces, 
+    public static void getKingMoves(ref List<Move> moves, ulong enemyPieces, ulong myKing, ulong empty, ulong castleRights, ulong allPieces,
         ulong myRook, ulong ePawn, ulong eRook, ulong eKnight, ulong eBishop, ulong eQueen, ulong eKing, char color)
     {
         int lsb = BitOperations.TrailingZeroCount(myKing);
@@ -636,28 +666,28 @@ class MoveGen
             //newMove.dest = kb;
             moves.Add(newMove);
         }
-        
+
         //castling moves
-        if((myKing & castleRights) > 0)
+        if ((myKing & castleRights) > 0)
         {
-            
+
             ulong longSquares = myKing << 1 | myKing << 2 | myKing << 3;
             ulong shortSquares = myKing >> 1 | myKing >> 2;
             castleRights &= myRook;
             //printBitBoard(castleRights);
-            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb+2, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //long castle && not in check or castling through check
+            if (((myKing << 4) & castleRights) > 0 && (longSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb + 1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb + 2, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //long castle && not in check or castling through check
             {
-                Move newMove = new Move(lsb, lsb+2, ' ');
+                Move newMove = new Move(lsb, lsb + 2, ' ');
                 newMove.castleFrom = lsb + 4;
                 newMove.castleTo = lsb + 1;
                 //newMove.source = lsb;
                 //newMove.dest = lsb + 2;
                 moves.Add(newMove);
             }
-            
-            if (((myKing >> 3) & castleRights) > 0 && (shortSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb-1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //short castle && not in check or castling through check
+
+            if (((myKing >> 3) & castleRights) > 0 && (shortSquares & allPieces) == 0 && !isSquareAttacked(lsb, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color) && !isSquareAttacked(lsb - 1, eBishop, eRook, eKnight, eQueen, ePawn, eKing, allPieces, color)) //short castle && not in check or castling through check
             { //dont think i need to check the desination square of king for check since i am checking that later on
-                Move newMove = new Move(lsb, lsb-2, ' ');
+                Move newMove = new Move(lsb, lsb - 2, ' ');
                 newMove.castleFrom = lsb - 3;
                 newMove.castleTo = lsb - 1;
                 //newMove.source = lsb;
@@ -678,5 +708,4 @@ class MoveGen
 
     }
 }
-
 

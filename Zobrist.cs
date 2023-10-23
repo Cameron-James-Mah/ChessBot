@@ -11,7 +11,7 @@ public static class Zobrist
         {
             for (int j = 0; j < 12; j++)
             {
-                zobristTable[j,i] = 0;
+                zobristTable[j, i] = 0;
             }
         }
 
@@ -19,7 +19,7 @@ public static class Zobrist
 
     //init zobrist table with random uint64
     public static void initTable()
-    {
+    {   
         for (int i = 0; i < 64; i++)
         {
             for (int j = 0; j < 12; j++)
@@ -36,7 +36,7 @@ public static class Zobrist
         {
             for (int j = 0; j < 12; j++)
             {
-                Console.WriteLine(zobristTable[j,i]);
+                Console.WriteLine(zobristTable[j, i]);
             }
         }
     }
@@ -71,6 +71,36 @@ public static class Zobrist
     //matches piece to corresponding index of a cell in zobrist table
     public static int indexOf(char piece)
     {
+        switch (piece)
+        {
+            case 'P':
+                return 0;
+            case 'N':
+                return 1;
+            case 'B':
+                return 2;
+            case 'R':
+                return 3;
+            case 'Q':
+                return 4;
+            case 'K':
+                return 5;
+            case 'p':
+                return 6;
+            case 'n':
+                return 7;
+            case 'b':
+                return 8;
+            case 'r':
+                return 9;
+            case 'q':
+                return 10;
+            case 'k':
+                return 11;
+            default: 
+                return -1;
+        }
+        /*
         if (piece == 'P')
             return 0;
         if (piece == 'N')
@@ -96,6 +126,6 @@ public static class Zobrist
         if (piece == 'k')
             return 11;
         else
-            return -1;
+            return -1;*/
     }
 }

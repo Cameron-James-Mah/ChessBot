@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using static ChessBot.Program;
 using static Globals;
 class Board
@@ -12,13 +13,11 @@ class Board
         wPawn = 0; wRook = 0; wKnight = 0; wBishop = 0; wQueen = 0; wKing = 0;
         allPieces = 0; empty = 0;
         ulong idx = 1;
-        int cnt = 0;
         for (int i = board.Length - 1; i >= 0; i--)
         {
             if (board[i] == 'p')
             {
                 bPawn = bPawn | idx;
-                cnt++;
             }
             else if (board[i] == 'r')
             {
@@ -74,6 +73,202 @@ class Board
         //Console.WriteLine(cnt);
     }
 
+    //update bitboards after move, improvement of my makeBoards function that I originally had as a simple but slow implmentation
+    public static void updateBoardsFromMove(ref ulong bPawn, ref ulong bRook, ref ulong bKnight, ref ulong bBishop, ref ulong bQueen, ref ulong bKing,
+            ref ulong wPawn, ref ulong wRook, ref ulong wKnight, ref ulong wBishop, ref ulong wQueen, ref ulong wKing,
+            ref ulong allPieces, ref ulong empty, ref ulong whitePieces, ref ulong blackPieces, char piece, char capture, int source, int dest)
+    {
+        /*
+        //updating moved piece 
+        switch (piece)
+        {
+            case 'p':
+                bPawn = ((ulong)1 << source) ^ bPawn; //remove from square 
+                bPawn = ((ulong)1 << dest) | bPawn; //add to square
+                break;
+            case 'r':
+                bRook = ((ulong)1 << source) ^ bRook; //remove from square 
+                bRook = ((ulong)1 << dest) | bRook; //add to square
+                break;
+            case 'n':
+                bKnight = ((ulong)1 << source) ^ bKnight; //remove from square 
+                bKnight = ((ulong)1 << dest) | bKnight; //add to square
+                break;
+            case 'b':
+                bBishop = ((ulong)1 << source) ^ bBishop; //remove from square 
+                bBishop = ((ulong)1 << dest) | bBishop; //add to square
+                break;
+            case 'q':
+                bQueen = ((ulong)1 << source) ^ bQueen; //remove from square 
+                bQueen = ((ulong)1 << dest) | bQueen; //add to square
+                break;
+            case 'k':
+                bKing = ((ulong)1 << source) ^ bKing; //remove from square 
+                bKing = ((ulong)1 << dest) | bKing; //add to square
+                break;
+            case 'P':
+                wPawn = ((ulong)1 << source) ^ wPawn; //remove from square 
+                wPawn = ((ulong)1 << dest) | wPawn; //add to square
+                break;
+            case 'R':
+                wRook = ((ulong)1 << source) ^ wRook; //remove from square 
+                wRook = ((ulong)1 << dest) | wRook; //add to square
+                break;
+            case 'N':
+                wKnight = ((ulong)1 << source) ^ wKnight; //remove from square 
+                wKnight = ((ulong)1 << dest) | wKnight; //add to square
+                break;
+            case 'B':
+                wBishop = ((ulong)1 << source) ^ wBishop; //remove from square 
+                wBishop = ((ulong)1 << dest) | wBishop; //add to square
+                break;
+            case 'Q':
+                wQueen = ((ulong)1 << source) ^ wQueen; //remove from square 
+                wQueen = ((ulong)1 << dest) | wQueen; //add to square
+                break;
+            case 'K':
+                wKing = ((ulong)1 << source) ^ wKing; //remove from square 
+                wKing = ((ulong)1 << dest) | wKing; //add to square
+                break;
+        }
+        //remove captured piece
+        switch (capture)
+        {
+            case 'p':
+                bPawn = ((ulong)1 << dest) ^ bPawn; //remove from square 
+                break;
+            case 'r':
+                bRook = ((ulong)1 << dest) ^ bRook; //remove from square 
+                break;
+            case 'n':
+                bKnight = ((ulong)1 << dest) ^ bKnight; //remove from square 
+                break;
+            case 'b':
+                bBishop = ((ulong)1 << dest) ^ bBishop; //remove from square 
+                break;
+            case 'q':
+                bQueen = ((ulong)1 << dest) ^ bQueen; //remove from square 
+                break;
+            case 'k':
+                bKing = ((ulong)1 << dest) ^ bKing; //remove from square 
+                break;
+            case 'P':
+                wPawn = ((ulong)1 << dest) ^ wPawn; //remove from square 
+                break;
+            case 'R':
+                wRook = ((ulong)1 << dest) ^ wRook; //remove from square 
+                break;
+            case 'N':
+                wKnight = ((ulong)1 << dest) ^ wKnight; //remove from square 
+                break;
+            case 'B':
+                wBishop = ((ulong)1 << dest) ^ wBishop; //remove from square 
+                break;
+            case 'Q':
+                wQueen = ((ulong)1 << dest) ^ wQueen; //remove from square 
+                break;
+            case 'K':
+                wKing = ((ulong)1 << dest) ^ wKing; //remove from square 
+                break;
+
+        }*/
+        allPieces = bPawn | bRook | bKnight | bBishop | bQueen | bKing | wPawn | wRook | wKnight | wBishop | wQueen | wKing;
+        empty = ~allPieces;
+        whitePieces = wPawn | wRook | wKnight | wBishop | wQueen | wKing;
+        blackPieces = bPawn | bRook | bKnight | bBishop | bQueen | bKing;
+    }
+
+    public static void addBitboardPiece(ref ulong bPawn, ref ulong bRook, ref ulong bKnight, ref ulong bBishop, ref ulong bQueen, ref ulong bKing,
+            ref ulong wPawn, ref ulong wRook, ref ulong wKnight, ref ulong wBishop, ref ulong wQueen, ref ulong wKing,
+            char piece, int dest)
+    {
+        switch (piece)
+        {
+            case 'p':
+                bPawn = ((ulong)1 << dest) | bPawn; //add to square
+                break;
+            case 'r':
+                bRook = ((ulong)1 << dest) | bRook; //add to square
+                break;
+            case 'n':
+                bKnight = ((ulong)1 << dest) | bKnight; //add to square
+                break;
+            case 'b':
+                bBishop = ((ulong)1 << dest) | bBishop; //add to square
+                break;
+            case 'q':
+                bQueen = ((ulong)1 << dest) | bQueen; //add to square
+                break;
+            case 'k':
+                bKing = ((ulong)1 << dest) | bKing; //add to square
+                break;
+            case 'P':
+                wPawn = ((ulong)1 << dest) | wPawn; //add to square
+                break;
+            case 'R':
+                wRook = ((ulong)1 << dest) | wRook; //add to square
+                break;
+            case 'N':
+                wKnight = ((ulong)1 << dest) | wKnight; //add to square
+                break;
+            case 'B':
+                wBishop = ((ulong)1 << dest) | wBishop; //add to square
+                break;
+            case 'Q':
+                wQueen = ((ulong)1 << dest) | wQueen; //add to square
+                break;
+            case 'K':
+                wKing = ((ulong)1 << dest) | wKing; //add to square
+                break;
+        }
+    }
+
+    public static void removeBitboardPiece(ref ulong bPawn, ref ulong bRook, ref ulong bKnight, ref ulong bBishop, ref ulong bQueen, ref ulong bKing,
+            ref ulong wPawn, ref ulong wRook, ref ulong wKnight, ref ulong wBishop, ref ulong wQueen, ref ulong wKing,
+            char piece, int dest)
+    {
+        switch (piece)
+        {
+            case 'p':
+                bPawn = ((ulong)1 << dest) ^ bPawn; //remove from square 
+                break;
+            case 'r':
+                bRook = ((ulong)1 << dest) ^ bRook; //remove from square 
+                break;
+            case 'n':
+                bKnight = ((ulong)1 << dest) ^ bKnight; //remove from square 
+                break;
+            case 'b':
+                bBishop = ((ulong)1 << dest) ^ bBishop; //remove from square 
+                break;
+            case 'q':
+                bQueen = ((ulong)1 << dest) ^ bQueen; //remove from square 
+                break;
+            case 'k':
+                bKing = ((ulong)1 << dest) ^ bKing; //remove from square 
+                break;
+            case 'P':
+                wPawn = ((ulong)1 << dest) ^ wPawn; //remove from square 
+                break;
+            case 'R':
+                wRook = ((ulong)1 << dest) ^ wRook; //remove from square 
+                break;
+            case 'N':
+                wKnight = ((ulong)1 << dest) ^ wKnight; //remove from square 
+                break;
+            case 'B':
+                wBishop = ((ulong)1 << dest) ^ wBishop; //remove from square 
+                break;
+            case 'Q':
+                wQueen = ((ulong)1 << dest) ^ wQueen; //remove from square 
+                break;
+            case 'K':
+                wKing = ((ulong)1 << dest) ^ wKing; //remove from square 
+                break;
+
+        }
+        
+    }
     public static void updateFromFen(string fen, char[] board)
     {
         int idx = 0;
@@ -132,7 +327,7 @@ class Board
                 board[63 - getCellNumber(moves[i].Substring(2, 2))] = board[63 - getCellNumber(moves[i].Substring(0, 2))];
                 board[63 - getCellNumber(moves[i].Substring(0, 2))] = ' ';
                 //mark for en passant
-                enPassant = (getCellNumber(moves[i].Substring(2, 2))+ getCellNumber(moves[i].Substring(0, 2)))/2; 
+                enPassant = (getCellNumber(moves[i].Substring(2, 2)) + getCellNumber(moves[i].Substring(0, 2))) / 2;
             }
             else if (moves[i].Length == 5) //promotion
             {
@@ -171,7 +366,7 @@ class Board
                     board[63 - getCellNumber(moves[i].Substring(2, 2)) - 2] = ' ';
                 }
             }
-            if(((ulong)1 << getCellNumber(moves[i].Substring(0, 2)) & castleRights) > 0) //if moved an unmoved rook or king, lose castle rights involving that piece
+            if (((ulong)1 << getCellNumber(moves[i].Substring(0, 2)) & castleRights) > 0) //if moved an unmoved rook or king, lose castle rights involving that piece
             {
                 castleRights ^= (ulong)1 << getCellNumber(moves[i].Substring(0, 2));
             }
@@ -188,7 +383,11 @@ class Board
             {
                 repetition.Add(currHash, 1);
             }
+<<<<<<< Updated upstream
             
+=======
+
+>>>>>>> Stashed changes
         }
         //printBoard(board);
     }

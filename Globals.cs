@@ -61,10 +61,10 @@ class Globals
             //this.key = key;
             //this.board = board;
         }
-        
+
         //public int alpha { get; set; }
         //public int beta { get; set; }
-        public int depth { get; set; } 
+        public int depth { get; set; }
         public int value { get; set; }
 
         public Move mv { get; set; }
@@ -118,7 +118,7 @@ class Globals
         50, 50, 50, 50, 50, 50, 50, 50,
         0,  0,  0,  0,  0,  0,  0,  0
     };
-    
+
 
 
     public static int[] knightSquares = new int[64] {
@@ -244,5 +244,9 @@ class Globals
 
 
     public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
+<<<<<<< Updated upstream
     
+=======
+
+>>>>>>> Stashed changes
 }
