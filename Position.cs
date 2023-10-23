@@ -212,12 +212,7 @@ public class Position
                 empty = ~allPieces;
                 whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
                 blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
-                /*
-                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);*/
-                /*
-                Board.updateBoardsFromMove(ref bPawn2, ref bRook2, ref bKnight2, ref bBishop2, ref bQueen2, ref bKing2, ref wPawn2, ref wRook2, ref wKnight2, ref wBishop2,
-                    ref wQueen2, ref wKing2, ref allPieces, ref empty, ref whitePieces, ref blackPieces, board[63 - moves[i].source], board[63 - moves[i].dest], moves[i].source, moves[i].dest);*/
+              
                 int kingSource = BitOperations.TrailingZeroCount(bKing2);
                 if (!isSquareAttacked(kingSource, wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
                 {
@@ -358,9 +353,6 @@ public class Position
         List<Move> moves = new List<Move>();
         if (color == 'b') //minimizing, black to move
         {
-            //Console.WriteLine("---------------------------------------------");
-            //Console.WriteLine(currHash);
-            //Board.printBoard(board);
             if (blackTable.ContainsKey(currHash))
             {
                 //if true value return true value
@@ -371,14 +363,6 @@ public class Position
                         return blackTable[currHash].value;
                     }
                     beta = Math.Min(beta, blackTable[currHash].value);
-                    //Console.WriteLine("Current key: " + currHash + "Table key: " + blackTable[currHash].key);
-                    /*
-                    Console.WriteLine("Current board: " + currHash + " Current Depth: " + depth);
-                    Board.printBoard(board);
-                    Console.WriteLine("Table board: " + blackTable[currHash].key + " Table Depth: " + blackTable[currHash].depth);
-                    Board.printBoard(blackTable[currHash].board);
-                    Console.WriteLine("---------------------------------------------");*/
-
                     if (beta <= alpha)
                     {
                         return beta;
@@ -399,8 +383,6 @@ public class Position
             ulong enemyPawnAttacks = wPawn << 7 & notAFile;
             enemyPawnAttacks |= wPawn << 9 & notHFile;
             orderMoves(ref moves, enemyPawnAttacks, ref board);
-            //char[] tempBoard = new char[64];
-            //board.CopyTo(tempBoard, 0);
             bool moved = false;
             char[] tempBoard = new char[64];
             for (int i = 0; i < moves.Count; i++)
@@ -478,22 +460,6 @@ public class Position
                     {
                         newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
                     }
-                    //validMoves.Add(moves[i]); 
-                    //newHash ^= blackHash;
-                    //newHash = Zobrist.computeHash(tempBoard);
-                    /*
-                    Console.WriteLine(Zobrist.computeHash(tempBoard));
-                    Console.WriteLine(newHash);
-                    Console.WriteLine();*/
-                    /*
-                    ulong nh = Zobrist.computeHash(tempBoard);
-                    Console.WriteLine(newHash);
-                    Console.WriteLine(nh);
-                    Console.WriteLine("---------------------------------------------");
-                    /*
-                    Console.WriteLine(newHash);
-                    Console.WriteLine(currHash);
-                    Console.WriteLine();*/
                     int temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash);
                     minEval = Math.Min(temp, minEval);
                     beta = Math.Min(beta, minEval);
@@ -503,35 +469,13 @@ public class Position
                         //if black table has entry or entry depth is below current depth
                         if (!blackTable.ContainsKey(currHash) || blackTable[currHash].depth < depth)
                         {
-                            //Board.printBoard(board);
-                            /*
-                            Board.printBoard(board);
-                            Console.WriteLine();
-                            Console.WriteLine("---------------------------------------------"); */
-                            //Console.WriteLine(currHash);
-                            /*
-                            if (blackTable.ContainsKey(currHash))
-                            {
-                                Console.WriteLine("Current board: " + currHash + " Current Depth: " + depth);
-                                Board.printBoard(board);
-                                Console.WriteLine("Table board: " + blackTable[currHash].key + " Table Depth: " + blackTable[currHash].depth);
-                                Board.printBoard(blackTable[currHash].board);
-                                Console.WriteLine("---------------------------------------------");
-                            }*/
-
-                            //blackTable.Remove(currHash);
-                            //blackTable.Add(currHash, new Entry(minEval, depth, moves[i], currHash, board));
                             blackTable[currHash] = new Entry(minEval, depth, moves[i], false);
-                            //Board.printBoard(blackTable[currHash].board);
-                            //Console.WriteLine("---------------------------------------------");
                         }
                         return minEval;
                     }
                 }
-
-                //Console.WriteLine(newHash);
             }
-            //Console.WriteLine("\n\n");
+
             if (!moved) //no valid moves 
             {
                 //int kingSource = BitOperations.TrailingZeroCount(bKing);
@@ -563,12 +507,6 @@ public class Position
                     return whiteTable[currHash].value;
                 }
                 alpha = Math.Max(alpha, whiteTable[currHash].value);
-                /*
-                Console.WriteLine("Current Hash: " + currHash);
-                Board.printBoard(board);
-                Console.WriteLine("Table board: " + whiteTable[currHash].key);
-                Board.printBoard(whiteTable[currHash].board);
-                Console.WriteLine("---------------------------------------------");*/
 
                 if (beta <= alpha)
                 {
@@ -667,21 +605,6 @@ public class Position
                     {
                         newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
                     }
-                    //newHash ^= whiteHash;
-                    //newHash = Zobrist.computeHash(tempBoard);
-                    /*
-                    Console.WriteLine(Zobrist.computeHash(tempBoard));
-                    Console.WriteLine(newHash);
-                    Console.WriteLine();*/
-                    /*
-                    ulong nh = Zobrist.computeHash(tempBoard);
-                    Console.WriteLine(newHash);
-                    Console.WriteLine(nh);
-                    Console.WriteLine("---------------------------------------------");*/
-                    /*
-                    Console.WriteLine(newHash);
-                    Console.WriteLine(currHash);
-                    Console.WriteLine();*/
 
                     int temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash);
                     maxEval = Math.Max(maxEval, temp);
@@ -709,12 +632,6 @@ public class Position
                 if (isSquareAttacked(kingSquare, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w')) //black must have checkmated white
                 {
                     maxEval = -50000 - depth; //50000 is arbitrary number to represent win, addition/subtraction for depth is to give inclination for faster wins
-                    //Board.printBoard(board);
-                    //Console.WriteLine(kingSquare);
-                    /*
-                    Console.WriteLine("Queen: ");
-                    printBitBoard(bQueen);*/
-                    //Console.WriteLine(isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'));
                 }
                 else //stalemate
                 {
@@ -757,73 +674,56 @@ public class Position
         int file = 0;
         for (int i = 0; i < board.Length; i++)
         {
-            if (board[i] == ' ')
+            switch (board[i])
             {
-                continue;
-            }
-            //white pieces
-            if (board[i] == 'P')
-            {
-                whiteEval += pawn + pawnSquaresW[i];
-            }
-            else if (board[i] == 'N')
-            {
-                whiteEval += knight + knightSquares[i];
-                whiteMaterial += knight;
-            }
-            else if (board[i] == 'B')
-            {
-                whiteEval += bishop + bishopSquaresW[i];
-                whiteMaterial += bishop;
-            }
-            else if (board[i] == 'R')
-            {
-                whiteEval += rook + rookSquaresW[i];
-                whiteMaterial += rook;
-            }
-            else if (board[i] == 'Q')
-            {
-                whiteEval += queen + queenSquares[i];
-                whiteMaterial += queen;
-            }
-            else if (board[i] == 'K')
-            {
-                wKingIdx = i;
-                wFile = file;
-                wRank = rank;
-            }
-
-            //black pices
-            else if (board[i] == 'p')
-            {
-                blackEval += pawn + pawnSquaresB[i];
-            }
-            else if (board[i] == 'n')
-            {
-                blackEval += knight + knightSquares[i];
-                blackMaterial += knight;
-            }
-            else if (board[i] == 'b')
-            {
-                blackEval += bishop + bishopSquaresB[i];
-                blackMaterial += bishop;
-            }
-            else if (board[i] == 'r')
-            {
-                blackEval += rook + rookSquaresB[i];
-                blackMaterial += rook;
-            }
-            else if (board[i] == 'q')
-            {
-                blackEval += queen + queenSquares[i];
-                blackMaterial += queen;
-            }
-
-            else if (board[i] == 'k')
-            {
-                bKingIdx = i;
-                bFile = file;
-                bRank = rank;
+                case 'P':
+                    whiteEval += pawn + pawnSquaresW[i];
+                    break;
+                case 'N':
+                    whiteEval += knight + knightSquares[i];
+                    whiteMaterial += knight;
+                    break;
+                case 'B':
+                    whiteEval += bishop + bishopSquaresW[i];
+                    whiteMaterial += bishop;
+                    break;
+                case 'R':
+                    whiteEval += rook + rookSquaresW[i];
+                    whiteMaterial += rook;
+                    break;
+                case 'Q':
+                    whiteEval += queen + queenSquares[i];
+                    whiteMaterial += queen;
+                    break;
+                case 'K':
+                    wKingIdx = i;
+                    wFile = file;
+                    wRank = rank;
+                    break;
+                case 'p':
+                    blackEval += pawn + pawnSquaresB[i];
+                    break;
+                case 'n':
+                    blackEval += knight + knightSquares[i];
+                    blackMaterial += knight;
+                    break;
+                case 'b':
+                    blackEval += bishop + bishopSquaresB[i];
+                    blackMaterial += bishop;
+                    break;
+                case 'r':
+                    blackEval += rook + rookSquaresB[i];
+                    blackMaterial += rook;
+                    break;
+                case 'q':
+                    blackEval += queen + queenSquares[i];
+                    blackMaterial += queen;
+                    break;
+                case 'k':
+                    bKingIdx = i;
+                    bFile = file;
+                    bRank = rank;
+                    break;
             }
             file++;
             if (file == 8)
@@ -879,11 +779,11 @@ public class Position
             moveScore += pieceTables[board[63 - moves[i].source]][63 - moves[i].dest] - (pieceTables[board[63 - moves[i].source]][63 - moves[i].source] + 100);
             moves[i].moveVal = moveScore;
         }
-        //order after
+        //order after 11 26 97
         moves.Sort((x, y) => y.moveVal.CompareTo(x.moveVal));
     }
 
-    static int getPieceValue(char piece)
+    public static int getPieceValue(char piece)
     {
         /*
          int pawn = 100; //P/p
@@ -908,32 +808,9 @@ public class Position
             default:
                 return 0;
         }
-        /*
-        if (piece == 'P' || piece == 'p')
-        {
-            return 100;
-        }
-        else if (piece == 'N' || piece == 'n')
-        {
-            return 320;
-        }
-        else if (piece == 'B' || piece == 'b')
-        {
-            return 330;
-        }
-        else if (piece == 'R' || piece == 'r')
-        {
-            return 500;
-        }
-        else if (piece == 'Q' || piece == 'q')
-        {
-            return 900;
-        }
-        return 0;*/
-
     }
 
-    static int pieceValueOrder(char piece)
+    public static int pieceValueOrder(char piece)
     {
         switch (piece)
         {
@@ -955,27 +832,5 @@ public class Position
             default:
                 return 0;
         }
-        /*
-        if (piece == 'P' || piece == 'p')
-        {
-            return 500;
-        }
-        else if (piece == 'N' || piece == 'n')
-        {
-            return 1600;
-        }
-        else if (piece == 'B' || piece == 'b')
-        {
-            return 1650;
-        }
-        else if (piece == 'R' || piece == 'r')
-        {
-            return 2500;
-        }
-        else if (piece == 'Q' || piece == 'q')
-        {
-            return 4500;
-        }
-        return 0;*/
     }
 }

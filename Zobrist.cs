@@ -100,32 +100,5 @@ public static class Zobrist
             default: 
                 return -1;
         }
-        /*
-        if (piece == 'P')
-            return 0;
-        if (piece == 'N')
-            return 1;
-        if (piece == 'B')
-            return 2;
-        if (piece == 'R')
-            return 3;
-        if (piece == 'Q')
-            return 4;
-        if (piece == 'K')
-            return 5;
-        if (piece == 'p')
-            return 6;
-        if (piece == 'n')
-            return 7;
-        if (piece == 'b')
-            return 8;
-        if (piece == 'r')
-            return 9;
-        if (piece == 'q')
-            return 10;
-        if (piece == 'k')
-            return 11;
-        else
-            return -1;*/
     }
 }
