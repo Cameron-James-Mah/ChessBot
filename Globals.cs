@@ -2,7 +2,7 @@
 using System.Collections;
 using static ChessBot.Program;
 
-//0b_11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111;
+//position startpos moves d2d4 e7e6 g1f3 b8c6 c1f4 d7d5 e2e3 f8b4 c2c3 b4e7 f1d3
 class Globals
 {
     //row bitmasks
@@ -49,7 +49,7 @@ class Globals
             };
     public struct Entry
     {
-        public Entry(int value, int depth, Move mv, bool trueValue)
+        public Entry(int value, int depth, Move mv, bool trueValue, int age)
         {
             //Do i need true value? just did alpha/beta for checkers
             //this.alpha = alpha;
@@ -58,6 +58,7 @@ class Globals
             this.value = value;
             this.mv = mv;
             this.trueValue = trueValue;
+            this.age = age;
             //this.key = key;
             //this.board = board;
         }
@@ -70,6 +71,9 @@ class Globals
         public Move mv { get; set; }
 
         public bool trueValue { get; set; }
+
+        public int age { get; set; }
+        
 
     }
 
