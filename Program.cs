@@ -48,6 +48,7 @@ namespace ChessBot
             public char promotion { get; }
 
             public int moveVal { get; set; } //move value for move ordering
+
         }
 
         public struct test
@@ -166,171 +167,197 @@ namespace ChessBot
                         Console.WriteLine(newH);
                         Console.WriteLine(Zobrist.computeHash(board2));
                         Console.WriteLine();*/
-                        int depth = 6; //temp hardcoded value
-                        Move bestMove = new Move();
-                        List<Move> moves = new List<Move>();
+                        //int depth = 6; //temp hardcoded value
+                        int age = 0;
                         timer.Start();
                         //DateTime t1 = DateTime.Now;
                         //DateTime t2 = DateTime.Now;
-
+                        Move bestMove = new Move();
                         //Console.WriteLine(depth);
-                        if (color == 'b') //minimizing
+                        int depth;
+                        //set a cap of 21 for now
+                        for (depth = 2; depth < 21; depth++)
                         {
-                            int minEval = 60000; //arbitrary max
-                            MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
-                            MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
-                            MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
-                            MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
-                            MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
-                            MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
-                            MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-
-                            for (int i = 0; i < moves.Count; i++)
+                            if (timer.Elapsed.Seconds >= 5)
                             {
-                                char[] tempBoard = new char[64];
-                                board.CopyTo(tempBoard, 0);
-                                ulong newHash = currH;
-                                newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
-                                if (moves[i].promotion != ' ')
+                                break;
+                            }
+                            Move currBest = new Move();
+                            List<Move> moves = new List<Move>();
+                            if (color == 'b') //minimizing
+                            {
+                                int minEval = 60000; //arbitrary max
+                                MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
+                                MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
+                                MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
+                                MoveGen.getRookMoves(ref moves, whitePieces, bRook, allPieces);
+                                MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
+                                MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
+                                MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
+
+                                for (int i = 0; i < moves.Count; i++)
                                 {
-                                    tempBoard[63 - moves[i].dest] = moves[i].promotion;
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
-                                }
-                                else
-                                {
-                                    tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
-                                }
-                                if (moves[i].capPassant >= 0)
-                                {
-                                    tempBoard[63 - moves[i].capPassant] = ' ';
-                                    newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
-                                }
-                                if (moves[i].castleFrom >= 0) //update rook position when castling
-                                {
-                                    tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
-                                    tempBoard[63 - moves[i].castleFrom] = ' ';
-                                    newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
-                                    newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
-                                }
-                                if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
-                                {
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
-                                }
-                                tempBoard[63 - moves[i].source] = ' ';
-                                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                                int kingSource = BitOperations.TrailingZeroCount(bKing);
-                                if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
-                                {
-                                    ulong newEnPassant = 0;
-                                    ulong newCastleRights = castleRights;
-                                    //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
-                                    if (moves[i].enPassant)
+                                    char[] tempBoard = new char[64];
+                                    board.CopyTo(tempBoard, 0);
+                                    ulong newHash = currH;
+                                    newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
+                                    if (moves[i].promotion != ' ')
                                     {
-                                        newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                                        tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
                                     }
                                     else
                                     {
-                                        newEnPassant = 0;
+                                        tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
                                     }
-                                    if ((castleRights & ((ulong)1 << moves[i].source)) > 0)
+                                    if (moves[i].capPassant >= 0)
                                     {
-                                        newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                                        tempBoard[63 - moves[i].capPassant] = ' ';
+                                        newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
                                     }
-                                    //validMoves.Add(moves[i]); 
-                                    newHash = Zobrist.computeHash(tempBoard);
-                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue, newHash);
-                                    if (temp < minEval)
+                                    if (moves[i].castleFrom >= 0) //update rook position when castling
                                     {
-                                        bestMove = moves[i];
-                                        minEval = Math.Min(temp, minEval);
+                                        tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
+                                        tempBoard[63 - moves[i].castleFrom] = ' ';
+                                        newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
+                                        newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
                                     }
-                                    blackTable[newHash] = new Entry(minEval, depth, moves[i], false);
+                                    if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
+                                    {
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
+                                    }
+                                    tempBoard[63 - moves[i].source] = ' ';
+                                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                        ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
+                                    int kingSource = BitOperations.TrailingZeroCount(bKing);
+                                    if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, 'b')) //FOR SOME REASON BLACK CASTLING MOVES DONT PASS THIS
+                                    {
+                                        ulong newEnPassant = 0;
+                                        ulong newCastleRights = castleRights;
+                                        //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                                        if (moves[i].enPassant)
+                                        {
+                                            newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                                        }
+                                        else
+                                        {
+                                            newEnPassant = 0;
+                                        }
+                                        newHash = Zobrist.computeHash(tempBoard);
+                                        if ((castleRights & ((ulong)1 << moves[i].source)) > 0)
+                                        {
+                                            newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                                            newHash ^= newCastleRights;
+                                        }
+                                        //validMoves.Add(moves[i]); 
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue, newHash, age);
+                                        if (temp < minEval)
+                                        {
+                                            currBest = moves[i];
+                                            minEval = Math.Min(temp, minEval);
+                                            blackTable[currH] = new Entry(minEval, depth, moves[i], false, age);
+                                        }
+                                        
+                                    }
+                                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                        ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
-                                board.CopyTo(tempBoard, 0);
+                                //Console.WriteLine(minEval);
+                                
                             }
-                            //Console.WriteLine(minEval);
-                        }
-                        else //maximizing
-                        {
-                            int maxEval = -60000; //arbitrary min
-                            MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
-                            MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
-                            MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
-                            MoveGen.getRookMoves(ref moves, blackPieces, wRook, allPieces);
-                            MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
-                            MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
-                            MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-
-                            for (int i = 0; i < moves.Count; i++)
+                            else //maximizing
                             {
-                                char[] tempBoard = new char[64];
-                                board.CopyTo(tempBoard, 0);
-                                ulong newHash = currH;
-                                newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
-                                if (moves[i].promotion != ' ')
-                                {
-                                    tempBoard[63 - moves[i].dest] = moves[i].promotion;
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
-                                }
-                                else
-                                {
-                                    tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
-                                }
-                                if (moves[i].capPassant >= 0)
-                                {
-                                    tempBoard[63 - moves[i].capPassant] = ' ';
-                                    newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
-                                }
-                                if (moves[i].castleFrom >= 0)
-                                {
-                                    tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
-                                    tempBoard[63 - moves[i].castleFrom] = ' ';
-                                    newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
-                                    newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
-                                }
-                                if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
-                                {
-                                    newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
-                                }
-                                tempBoard[63 - moves[i].source] = ' ';
+                                int maxEval = -60000; //arbitrary min
+                                MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
+                                MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
+                                MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
+                                MoveGen.getRookMoves(ref moves, blackPieces, wRook, allPieces);
+                                MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
+                                MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
+                                MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
 
-                                Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
-                                    ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
-                                int kingSource = BitOperations.TrailingZeroCount(wKing);
-                                if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                                for (int i = 0; i < moves.Count; i++)
                                 {
-                                    ulong newEnPassant = 0;
-                                    ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
-                                                                          //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
-                                    if (moves[i].enPassant)
+                                    char[] tempBoard = new char[64];
+                                    board.CopyTo(tempBoard, 0);
+                                    ulong newHash = currH;
+                                    newHash ^= Zobrist.getHash(63 - moves[i].source, board[63 - moves[i].source]);
+                                    if (moves[i].promotion != ' ')
                                     {
-                                        newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                                        tempBoard[63 - moves[i].dest] = moves[i].promotion;
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, moves[i].promotion);
                                     }
-                                    else //RECENTLY ADDED THIS ON A WHIM, DOUBLE CHECK
+                                    else
                                     {
-                                        newEnPassant = 0;
+                                        tempBoard[63 - moves[i].dest] = tempBoard[63 - moves[i].source];
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].source]);
                                     }
-                                    if ((castleRights & ((ulong)1 << moves[i].source)) > 0) //if castling move then update castleRights, I THINK THIS IS MY ISSUE 
+                                    if (moves[i].capPassant >= 0)
                                     {
-                                        newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
-                                        //printBitBoard(newCastleRights);
+                                        tempBoard[63 - moves[i].capPassant] = ' ';
+                                        newHash ^= Zobrist.getHash(63 - moves[i].capPassant, board[63 - moves[i].capPassant]);
                                     }
-                                    newHash = Zobrist.computeHash(tempBoard);
-                                    int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', int.MinValue, int.MaxValue, newHash);
-                                    if (temp > maxEval)
+                                    if (moves[i].castleFrom >= 0)
                                     {
-                                        bestMove = moves[i];
-                                        maxEval = Math.Max(temp, maxEval);
+                                        tempBoard[63 - moves[i].castleTo] = tempBoard[63 - moves[i].castleFrom];
+                                        tempBoard[63 - moves[i].castleFrom] = ' ';
+                                        newHash ^= Zobrist.getHash(63 - moves[i].castleTo, board[63 - moves[i].castleFrom]);
+                                        newHash ^= Zobrist.getHash(63 - moves[i].castleFrom, board[63 - moves[i].castleFrom]);
                                     }
-                                    whiteTable[newHash] = new Entry(maxEval, depth, moves[i], false);
+                                    if (board[63 - moves[i].dest] != ' ') //if capturing then update hash
+                                    {
+                                        newHash ^= Zobrist.getHash(63 - moves[i].dest, board[63 - moves[i].dest]);
+                                    }
+                                    tempBoard[63 - moves[i].source] = ' ';
+
+                                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                        ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard, ref whitePieces, ref blackPieces);
+                                    int kingSource = BitOperations.TrailingZeroCount(wKing);
+                                    if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, 'w'))
+                                    {
+                                        ulong newEnPassant = 0;
+                                        ulong newCastleRights = castleRights; //I THINK THIS WAS MY ISSUE, BEFORE I HAD CASTLERIGHTS = 0 AND I ONLY CHANGED CASTLERIGHTS IF I MYSELF CASTLED, SO A NON CASTLING MOVE WOULD EFFECTIVELY WIPE ALL CASTLERIGHTS
+                                                                              //Console.WriteLine("From: " + moves[i].source + " Destination: " + moves[i].dest + " Promotion: " + moves[i].promotion);
+                                        if (moves[i].enPassant)
+                                        {
+                                            newEnPassant = (ulong)1 << ((moves[i].source + moves[i].dest) / 2);
+                                        }
+                                        else //RECENTLY ADDED THIS ON A WHIM, DOUBLE CHECK
+                                        {
+                                            newEnPassant = 0;
+                                        }
+                                        newHash = Zobrist.computeHash(tempBoard);
+                                        if ((castleRights & ((ulong)1 << moves[i].source)) > 0) //if castling move then update castleRights, I THINK THIS IS MY ISSUE 
+                                        {
+                                            newCastleRights = castleRights ^ ((ulong)1 << moves[i].source);
+                                            newHash ^= newCastleRights;
+                                            //printBitBoard(newCastleRights);
+                                        }
+
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', int.MinValue, int.MaxValue, newHash, age);
+                                        if (temp > maxEval)
+                                        {
+                                            currBest = moves[i];
+                                            maxEval = Math.Max(temp, maxEval);
+                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], false, age);
+                                        }
+                                        
+                                    }
+                                    Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                        ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
-                                board.CopyTo(tempBoard, 0);
+                                
                             }
-
+                            bestMove = currBest;
+                            age++;
                         }
+
+                        /*
+                        for(int i = 0; i < moves.Count; i++)
+                        {
+                            Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);
+                        }*/
                         if (bestMove.promotion != ' ') //promotion move
                         {
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest] + bestMove.promotion);
@@ -339,15 +366,9 @@ namespace ChessBot
                         {
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         }
-                        /*
-                        for(int i = 0; i < moves.Count; i++)
-                        {
-                            Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);
-                        }*/
-
-
                         timer.Stop();
                         Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Depth: " + depth);
+                        //Console.WriteLine("Seconds elapsed: " + timer.Elapsed.Seconds.ToString() + " Depth: " + depth);
                         timer.Reset();
                         whiteTable.Clear();
                         blackTable.Clear();
@@ -472,7 +493,7 @@ namespace ChessBot
                             {
                                 castleRights |= (ulong)1 << 7;
                             }
-                            ulong curr = perft(tests[i].depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
+                            ulong curr = Perft.perft(tests[i].depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color);
                             res += "\n" + tests[i].fen + " Expected nodes: " + tests[i].result + " Traversed nodes: " + curr;
                             if (curr == tests[i].result)
@@ -593,7 +614,7 @@ namespace ChessBot
                     case "perft":
                         perftValue = int.Parse(tokens[1]);
                         timer.Start();
-                        Console.WriteLine("Nodes: " + perft(Int32.Parse(tokens[1]), bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
+                        Console.WriteLine("Nodes: " + Perft.perft(Int32.Parse(tokens[1]), bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color));
                         timer.Stop();
                         Console.WriteLine("\nElapsed time: " + timer.Elapsed.ToString());
