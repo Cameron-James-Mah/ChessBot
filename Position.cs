@@ -170,6 +170,8 @@ public class Position
         char[] tempBoard = new char[64];
         List<Move> moves = new List<Move>();
         bool moved = false;
+        //Board.printBoard(board);
+        //Console.WriteLine(bKing);
         if (color == 'b') //minimizing, black to move
         {
             int minEval = 60000; //arbitrary win number
@@ -188,7 +190,7 @@ public class Position
                         return beta;
                     }
                 }
-                if (!blackTable[currHash].trueValue) //if not true value use pv node
+                if (!blackTable[currHash].trueValue && !blackTable[currHash].mv.enPassant) //if not true value use pv node
                 {
                     Move pv = blackTable[currHash].mv;
                     ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
@@ -241,7 +243,7 @@ public class Position
                         ref wQueen2, ref wKing2, board[63 - pv.source], pv.source);
 
                     ulong allPieces2 = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2 | wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
-                    ulong empty2 = ~allPieces;
+                    ulong empty2 = ~allPieces2; //MY HUGE BUG WAS HERE ~ALLPIECES INSTEAD OF ~ALLPIECES2
                     ulong whitePieces2 = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
                     ulong blackPieces2 = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
 
@@ -267,6 +269,8 @@ public class Position
 
                     if (beta <= alpha)
                     {
+                        //AFTER FIXING PV NODE BUG, CAN UPDATE TRANSPOSITION TABLE HERE
+                        blackTable[currHash] = new Entry(minEval, depth, pv, false, age);
                         return minEval;
                     }
                 }
@@ -367,7 +371,7 @@ public class Position
                     if (beta <= alpha)
                     {
                         //if black table has entry or entry depth is below current depth
-                        if (!blackTable.ContainsKey(currHash) || age >= blackTable[currHash].age && blackTable[currHash].depth < depth)
+                        if (!blackTable.ContainsKey(currHash) || age >= blackTable[currHash].age && blackTable[currHash].depth <= depth)
                         {
                             blackTable[currHash] = new Entry(minEval, depth, moves[i], false, age);
                         }
@@ -415,7 +419,7 @@ public class Position
                         return alpha;
                     }
                 }
-                if (!whiteTable[currHash].trueValue)
+                if (!whiteTable[currHash].trueValue && !whiteTable[currHash].mv.enPassant)
                 {
                     Move pv = whiteTable[currHash].mv;
                     ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
@@ -496,6 +500,7 @@ public class Position
                     alpha = Math.Max(maxEval, alpha);
                     if (beta <= alpha)
                     {
+                        whiteTable[currHash] = new Entry(maxEval, depth, pv, false, age);
                         return maxEval;
                     }
                 }
@@ -626,7 +631,7 @@ public class Position
 
             }
 
-            if (!whiteTable.ContainsKey(currHash) || age >= whiteTable[currHash].age && whiteTable[currHash].depth < depth)
+            if (!whiteTable.ContainsKey(currHash) || age >= whiteTable[currHash].age && whiteTable[currHash].depth <= depth)
             {
                 whiteTable[currHash] = new Entry(maxEval, depth, null, true, age); //true value 
             }
