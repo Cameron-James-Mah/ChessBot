@@ -3,6 +3,7 @@ using System.Collections;
 using static ChessBot.Program;
 
 //position startpos moves d2d4 e7e6 g1f3 b8c6 c1f4 d7d5 e2e3 f8b4 c2c3 b4e7 f1d3
+//king-pawn endgame: position fen 3k4/8/5p2/8/3P4/4P3/3K4/8 b - - 0 1
 class Globals
 {
     //row bitmasks

@@ -169,7 +169,9 @@ namespace ChessBot
                         Console.WriteLine();*/
                         //int depth = 6; //temp hardcoded value
                         int age = 0;
+                        int time = 5;
                         timer.Start();
+
                         //DateTime t1 = DateTime.Now;
                         //DateTime t2 = DateTime.Now;
                         Move bestMove = new Move();
@@ -178,10 +180,6 @@ namespace ChessBot
                         //set a cap of 21 for now
                         for (depth = 2; depth < 21; depth++)
                         {
-                            if (timer.Elapsed.Seconds >= 5)
-                            {
-                                break;
-                            }
                             Move currBest = new Move();
                             List<Move> moves = new List<Move>();
                             if (color == 'b') //minimizing
@@ -195,7 +193,7 @@ namespace ChessBot
                                 MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
 
-                                for (int i = 0; i < moves.Count; i++)
+                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -277,7 +275,7 @@ namespace ChessBot
                                 MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
 
-                                for (int i = 0; i < moves.Count; i++)
+                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -349,8 +347,13 @@ namespace ChessBot
                                 }
                                 
                             }
+                            if(timer.Elapsed.Seconds >= time)
+                            {
+                                break;
+                            }
                             bestMove = currBest;
                             age++;
+
                         }
 
                         /*
@@ -367,7 +370,7 @@ namespace ChessBot
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         }
                         timer.Stop();
-                        Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Depth: " + depth);
+                        Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Interrupted Depth: " + depth);
                         //Console.WriteLine("Seconds elapsed: " + timer.Elapsed.Seconds.ToString() + " Depth: " + depth);
                         timer.Reset();
                         whiteTable.Clear();
