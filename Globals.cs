@@ -50,15 +50,14 @@ class Globals
             };
     public struct Entry
     {
-        public Entry(int value, int depth, Move mv, bool trueValue, int age)
+        public Entry(int value, int depth, Move mv, int age)
         {
             //Do i need true value? just did alpha/beta for checkers
             //this.alpha = alpha;
             //this.beta = beta;
             this.depth = depth;
             this.value = value;
-            this.mv = mv;
-            this.trueValue = trueValue;
+            this.mv = mv; //hash move
             this.age = age;
             //this.key = key;
             //this.board = board;
@@ -71,7 +70,6 @@ class Globals
 
         public Move mv { get; set; }
 
-        public bool trueValue { get; set; }
 
         public int age { get; set; }
         
@@ -83,6 +81,9 @@ class Globals
     public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(2000000); //transposition table for black, should i maybe init with size and load factor later?
     //public static ulong whiteHash = Zobrist.NextUInt64(new Random());
     //public static ulong blackHash = Zobrist.NextUInt64(new Random());
+
+    public static Dictionary<ulong, Entry> wPVTable = new Dictionary<ulong, Entry>();
+    public static Dictionary<ulong, Entry> bPVTable = new Dictionary<ulong, Entry>();
 
     public static Dictionary<ulong, int> repetition = new Dictionary<ulong, int>(); //<board hash, occurences>for checking threefold repetition as i am iterative over moves of given position increment occurence of hash position
 

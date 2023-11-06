@@ -178,7 +178,7 @@ namespace ChessBot
                         //Console.WriteLine(depth);
                         int depth;
                         //set a cap of 21 for now
-                        for (depth = 2; depth < 21; depth++)
+                        for (depth = 2; depth < 7; depth++)
                         {
                             Move currBest = new Move();
                             List<Move> moves = new List<Move>();
@@ -254,7 +254,7 @@ namespace ChessBot
                                         {
                                             currBest = moves[i];
                                             minEval = Math.Min(temp, minEval);
-                                            blackTable[currH] = new Entry(minEval, depth, moves[i], false, age);
+                                            blackTable[currH] = new Entry(minEval, depth, moves[i], age);
                                         }
                                         
                                     }
@@ -262,7 +262,7 @@ namespace ChessBot
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
                                 //Console.WriteLine(minEval);
-                                
+                                bPVTable[currH] = new Entry(minEval, depth, currBest, age);
                             }
                             else //maximizing
                             {
@@ -338,14 +338,14 @@ namespace ChessBot
                                         {
                                             currBest = moves[i];
                                             maxEval = Math.Max(temp, maxEval);
-                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], false, age);
+                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], age);
                                         }
                                         
                                     }
                                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
-                                
+                                wPVTable[currH] = new Entry(maxEval, depth, currBest, age);
                             }
                             if(timer.Elapsed.Seconds >= time)
                             {
@@ -375,6 +375,8 @@ namespace ChessBot
                         timer.Reset();
                         whiteTable.Clear();
                         blackTable.Clear();
+                        wPVTable.Clear();
+                        bPVTable.Clear();
                         break;
                     case "stop":
                         System.Environment.Exit(0);
