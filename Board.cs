@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 using static ChessBot.Program;
 using static Globals;
@@ -364,5 +366,44 @@ class Board
             return true;
         }
         return false;
+    }
+
+    public static int countAllMaterial(ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen,
+                                         ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen)
+    {
+        int res = 0;
+        res += BitOperations.PopCount(bPawn) * Position.getPieceValue('p');
+        res += BitOperations.PopCount(wPawn) * Position.getPieceValue('p');
+        res += BitOperations.PopCount(bKnight) * Position.getPieceValue('n');
+        res += BitOperations.PopCount(wKnight) * Position.getPieceValue('n');
+        res += BitOperations.PopCount(bBishop) * Position.getPieceValue('b');
+        res += BitOperations.PopCount(wBishop) * Position.getPieceValue('b');
+        res += BitOperations.PopCount(bRook) * Position.getPieceValue('r');
+        res += BitOperations.PopCount(wRook) * Position.getPieceValue('r');
+        res += BitOperations.PopCount(bQueen) * Position.getPieceValue('q');
+        res += BitOperations.PopCount(wQueen) * Position.getPieceValue('q');
+        return res;
+    }
+    
+    public static int estimatedHalfMoves(int material)
+    {
+        int res = 0;
+        if(material < 2000)
+        {
+            res = material / 100 + 10;
+        }
+        else if (material <= 6000)
+        {
+            res = ((material / 100) * 3) / 8 + 22;
+        }
+        else
+        {
+            res = material / 100 * 5/4-30;
+        }
+        if(75 < res)
+        {
+            return 75;
+        }
+        return res;
     }
 }

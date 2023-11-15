@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections;
+using System.Diagnostics;
 using static ChessBot.Program;
 
 //position startpos moves d2d4 e7e6 g1f3 b8c6 c1f4 d7d5 e2e3 f8b4 c2c3 b4e7 f1d3
 //king-pawn endgame: position fen 3k4/8/5p2/8/3P4/4P3/3K4/8 b - - 0 1
+
+//bug position: position fen r4r2/pp1Q1p1k/7p/3p4/2P1p2q/P7/1P1NK1P1/n1B2B2 b - - 1 25
 class Globals
 {
     //row bitmasks
@@ -50,7 +53,7 @@ class Globals
             };
     public struct Entry
     {
-        public Entry(int value, int depth, Move mv, bool trueValue, int age)
+        public Entry(int value, int depth, Move mv, int age)
         {
             //Do i need true value? just did alpha/beta for checkers
             //this.alpha = alpha;
@@ -58,7 +61,6 @@ class Globals
             this.depth = depth;
             this.value = value;
             this.mv = mv;
-            this.trueValue = trueValue;
             this.age = age;
             //this.key = key;
             //this.board = board;
@@ -71,21 +73,19 @@ class Globals
 
         public Move mv { get; set; }
 
-        public bool trueValue { get; set; }
-
         public int age { get; set; }
         
 
     }
 
     public static ulong[,] zobristTable = new ulong[12, 64]; //zobrist table
-    public static Dictionary<ulong, Entry> whiteTable = new Dictionary<ulong, Entry>(2000000); //transposition table for white, should i maybe init with size and load factor later?
-    public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(2000000); //transposition table for black, should i maybe init with size and load factor later?
+    public static Dictionary<ulong, Entry> whiteTable = new Dictionary<ulong, Entry>(200000); //transposition table for white, should i maybe init with size and load factor later?
+    public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(200000); //transposition table for black, should i maybe init with size and load factor later?
     //public static ulong whiteHash = Zobrist.NextUInt64(new Random());
     //public static ulong blackHash = Zobrist.NextUInt64(new Random());
-
+    public static Move[] killers = new Move[21]; //killer moves
     public static Dictionary<ulong, int> repetition = new Dictionary<ulong, int>(); //<board hash, occurences>for checking threefold repetition as i am iterative over moves of given position increment occurence of hash position
-
+    
     /*
      * 
      * 0, 0, 0, 0, 0, 0, 0, 0,
@@ -249,5 +249,6 @@ class Globals
 
 
     public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
-
+    public static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
+    public static double time = 5;
 }

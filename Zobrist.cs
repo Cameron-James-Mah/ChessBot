@@ -6,7 +6,6 @@ public static class Zobrist
     //init zobrist table 
     public static void initialise()
     {
-
         for (int i = 0; i < 64; i++)
         {
             for (int j = 0; j < 12; j++)
@@ -14,7 +13,6 @@ public static class Zobrist
                 zobristTable[j, i] = 0;
             }
         }
-
     }
 
     //init zobrist table with random uint64
