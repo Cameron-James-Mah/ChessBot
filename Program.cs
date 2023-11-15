@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using static Globals;
@@ -19,8 +20,6 @@ namespace ChessBot
 {
     class Program
     {
-        static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
-
         public class Move //probably refactor thid to globals
         {
             public Move(int s, int d, char p)
@@ -136,7 +135,7 @@ namespace ChessBot
             pieceTables.Add('k', kingSquaresMiddleB);
             pieceTables.Add('K', kingSquaresMiddleW);
 
-
+            int wtime, btime;
             while (true)
             {
                 string command = Console.ReadLine();
@@ -151,30 +150,30 @@ namespace ChessBot
                         break;
                     case "go":
                         ulong currH = Zobrist.computeHash(board);
-                        /*
-                        ulong newHash = currHash;
-                        Console.WriteLine(newHash);
-                        newHash ^= Zobrist.getHash(63 - 11, board[63 - 11]);
-                        newHash ^= Zobrist.getHash(63 - 27, board[63 - 11]);
-                        Console.WriteLine(newHash);
-                        newHash ^= Zobrist.getHash(63 - 27, board[63 - 11]);
-                        newHash ^= Zobrist.getHash(63 - 11, board[63 - 11]);
-                        Console.WriteLine(newHash);*/
-                        /*
-                        ulong newH = currH;
-                        newH ^= Zobrist.getHash(63 - 11, board[63 - 11]);
-                        newH ^= Zobrist.getHash(63 - 27, board[63 - 11]);
-                        Console.WriteLine(newH);
-                        Console.WriteLine(Zobrist.computeHash(board2));
-                        Console.WriteLine();*/
-                        //int depth = 6; //temp hardcoded value
+                        if(tokens.Length > 1)
+                        {
+                            if (color == 'b')
+                            {
+                                time = Int32.Parse(tokens[4]);
+                            }
+                            else
+                            {
+                                time = Int32.Parse(tokens[2]);
+                            }
+                            int material = Board.countAllMaterial(bPawn, bRook, bKnight, bBishop, bQueen, wPawn, wRook, wKnight, wBishop, wQueen);
+                            //Console.WriteLine(time);
+                            time = time / Board.estimatedHalfMoves(material);
+                            if (time <= 0)
+                            {
+                                time = 100;
+                            }
+                            time /= 1000;
+                        }
+                        
                         int age = 0;
-                        int time = 5;
                         timer.Start();
-
-                        //DateTime t1 = DateTime.Now;
-                        //DateTime t2 = DateTime.Now;
                         Move bestMove = new Move();
+                        int eval = 0;
                         //Console.WriteLine(depth);
                         int depth;
                         //set a cap of 21 for now
@@ -254,7 +253,8 @@ namespace ChessBot
                                         {
                                             currBest = moves[i];
                                             minEval = Math.Min(temp, minEval);
-                                            blackTable[currH] = new Entry(minEval, depth, moves[i], false, age);
+                                            blackTable[currH] = new Entry(minEval, depth, moves[i], age);
+                                            eval = minEval;
                                         }
                                         
                                     }
@@ -338,7 +338,8 @@ namespace ChessBot
                                         {
                                             currBest = moves[i];
                                             maxEval = Math.Max(temp, maxEval);
-                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], false, age);
+                                            eval = maxEval;
+                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], age);
                                         }
                                         
                                     }
@@ -353,7 +354,7 @@ namespace ChessBot
                             }
                             bestMove = currBest;
                             age++;
-
+                            //Console.WriteLine(notation[currBest.source] + notation[currBest.dest]);
                         }
 
                         /*
@@ -371,10 +372,12 @@ namespace ChessBot
                         }
                         timer.Stop();
                         Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Interrupted Depth: " + depth);
+                        //Console.WriteLine("Alloted time: " + time + " Interrupted Depth: " + depth);
                         //Console.WriteLine("Seconds elapsed: " + timer.Elapsed.Seconds.ToString() + " Depth: " + depth);
                         timer.Reset();
                         whiteTable.Clear();
                         blackTable.Clear();
+                        Array.Clear(killers, 0, killers.Length);
                         break;
                     case "stop":
                         System.Environment.Exit(0);
@@ -385,7 +388,8 @@ namespace ChessBot
                         break;
                     case "t":
                         //check moves for position
-                        
+                        //ulong temp2 = 0b01001001;
+                        //Console.WriteLine(BitOperations.PopCount(temp2));
                         List<Move> testMoves = new List<Move>();
                         if(color == 'b')
                         {
@@ -453,7 +457,6 @@ namespace ChessBot
                         break;
                     case "test":
                         //run through perft tests
-                        //test 1 
                         int testsPassed = 0;
                         List<test> tests = new List<test>();
                         Console.WriteLine("Test results: ");

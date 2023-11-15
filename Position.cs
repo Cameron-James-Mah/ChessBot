@@ -158,7 +158,10 @@ public class Position
                                          ulong allPieces, ulong empty, char[] board, ulong whitePieces, ulong blackPieces,
                                          ulong castleRights, ulong enPassant, char color, int alpha, int beta, ulong currHash, int age)
     {
-
+        if (timer.Elapsed.Seconds >= time)
+        {
+            return 0;
+        }
         if (depth == 0)
         {
             return eval(board, color);
@@ -170,6 +173,8 @@ public class Position
         char[] tempBoard = new char[64];
         List<Move> moves = new List<Move>();
         bool moved = false;
+        Move bestMv = null;
+        Move pv = null;
         //Board.printBoard(board);
         //Console.WriteLine(bKing);
         if (color == 'b') //minimizing, black to move
@@ -177,22 +182,18 @@ public class Position
             int minEval = 60000; //arbitrary win number
             if (blackTable.ContainsKey(currHash))
             {
-                //if true value return true value
+                
                 if (age == blackTable[currHash].age && blackTable[currHash].depth >= depth)
                 {
-                    if (blackTable[currHash].trueValue)
-                    {
-                        return blackTable[currHash].value;
-                    }
                     beta = Math.Min(beta, blackTable[currHash].value);
                     if (beta <= alpha)
                     {
                         return beta;
                     }
                 }
-                if (!blackTable[currHash].trueValue && !blackTable[currHash].mv.enPassant) //if not true value use pv node
+                if (blackTable[currHash].mv != null && !blackTable[currHash].mv.enPassant) //if not true value use hash move
                 {
-                    Move pv = blackTable[currHash].mv;
+                    pv = blackTable[currHash].mv;
                     ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
                     ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                     board.CopyTo(tempBoard, 0);
@@ -269,8 +270,13 @@ public class Position
 
                     if (beta <= alpha)
                     {
-                        //AFTER FIXING PV NODE BUG, CAN UPDATE TRANSPOSITION TABLE HERE
-                        blackTable[currHash] = new Entry(minEval, depth, pv, false, age);
+                        
+                        blackTable[currHash] = new Entry(minEval, depth, pv, age);
+                        /*
+                        if (board[63 - pv.dest] == ' ')
+                        {
+                            killers[depth] = pv;
+                        }*/
                         return minEval;
                     }
                 }
@@ -287,9 +293,13 @@ public class Position
             MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
             ulong enemyPawnAttacks = wPawn << 7 & notAFile;
             enemyPawnAttacks |= wPawn << 9 & notHFile;
-            orderMoves(ref moves, enemyPawnAttacks, board);
+            orderMoves(ref moves, enemyPawnAttacks, board, killers[depth]);
             for (int i = 0; i < moves.Count; i++)
             {
+                if (pv != null && pv.source == moves[i].source && pv.dest == moves[i].dest) //dont retry hash move
+                {
+                    continue;
+                }
                 ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
                 ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                 board.CopyTo(tempBoard, 0);
@@ -371,9 +381,13 @@ public class Position
                     if (beta <= alpha)
                     {
                         //if black table has entry or entry depth is below current depth
-                        if (!blackTable.ContainsKey(currHash) || age >= blackTable[currHash].age && blackTable[currHash].depth <= depth)
+                        if (!blackTable.ContainsKey(currHash) || blackTable[currHash].depth <= depth)
                         {
-                            blackTable[currHash] = new Entry(minEval, depth, moves[i], false, age);
+                            blackTable[currHash] = new Entry(minEval, depth, moves[i], age);
+                            if (board[63 - moves[i].dest] == ' ')
+                            {
+                                killers[depth] = moves[i];
+                            }
                         }
                         return minEval;
                     }
@@ -392,10 +406,10 @@ public class Position
                     return 0;
                 }
             }
-            //true value node here?
-            if (!blackTable.ContainsKey(currHash) || age >= blackTable[currHash].age && blackTable[currHash].depth < depth)
+            
+            if (!blackTable.ContainsKey(currHash) || blackTable[currHash].depth <= depth)
             {
-                blackTable[currHash] = new Entry(minEval, depth, null, true, age);
+                blackTable[currHash] = new Entry(minEval, depth, bestMv, age);
             }
             //Board.printBoard(board);
             return minEval;
@@ -407,11 +421,6 @@ public class Position
             {
                 if(age == whiteTable[currHash].age && whiteTable[currHash].depth >= depth)
                 {
-                    
-                    if (whiteTable[currHash].trueValue == true)
-                    {
-                        return whiteTable[currHash].value;
-                    }
                     alpha = Math.Max(alpha, whiteTable[currHash].value);
 
                     if (beta <= alpha)
@@ -419,9 +428,9 @@ public class Position
                         return alpha;
                     }
                 }
-                if (!whiteTable[currHash].trueValue && !whiteTable[currHash].mv.enPassant)
+                if (whiteTable[currHash].mv != null && !whiteTable[currHash].mv.enPassant)
                 {
-                    Move pv = whiteTable[currHash].mv;
+                    pv = whiteTable[currHash].mv;
                     ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
                     ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                     board.CopyTo(tempBoard, 0);
@@ -494,13 +503,18 @@ public class Position
                         newCastleRights = castleRights ^ ((ulong)1 << pv.source);
                         newHash ^= newCastleRights;
                     }
-
+                    
                     int temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces2, empty2, tempBoard, whitePieces2, blackPieces2, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age);
                     maxEval = Math.Max(maxEval, temp);
                     alpha = Math.Max(maxEval, alpha);
                     if (beta <= alpha)
                     {
-                        whiteTable[currHash] = new Entry(maxEval, depth, pv, false, age);
+                        whiteTable[currHash] = new Entry(maxEval, depth, pv, age);
+                        /*
+                        if (board[63 - pv.dest] == ' ')
+                        {
+                            killers[depth] = pv;
+                        }*/
                         return maxEval;
                     }
                 }
@@ -517,10 +531,14 @@ public class Position
             int kingSquare = BitOperations.TrailingZeroCount(wKing);
             ulong enemyPawnAttacks = bPawn >> 7 & notHFile;
             enemyPawnAttacks |= bPawn >> 9 & notAFile;
-            orderMoves(ref moves, enemyPawnAttacks, board);
+            orderMoves(ref moves, enemyPawnAttacks, board, killers[depth]);
             board.CopyTo(tempBoard, 0);
             for (int i = 0; i < moves.Count; i++)
             {
+                if(pv != null && pv.source == moves[i].source && pv.dest == moves[i].dest) //dont retry hash move
+                {
+                    continue;
+                }
                 ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
                 ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
                 board.CopyTo(tempBoard, 0);
@@ -602,13 +620,17 @@ public class Position
                     if (beta <= alpha)
                     {
                         //if black table has entry or entry depth is below current depth
-                        if (!whiteTable.ContainsKey(currHash) || age >= whiteTable[currHash].age && whiteTable[currHash].depth < depth)
+                        if (!whiteTable.ContainsKey(currHash) || whiteTable[currHash].depth <= depth)
                         {
                             //Board.printBoard(board);
                             //Console.WriteLine("---------------------------------------------");
                             //whiteTable.Remove(currHash);
                             //whiteTable.Add(currHash, new Entry(maxEval, depth, moves[i], currHash, board));
-                            whiteTable[currHash] = new Entry(maxEval, depth, moves[i], false, age);
+                            whiteTable[currHash] = new Entry(maxEval, depth, moves[i], age);
+                            if (board[63 - moves[i].dest] == ' ')
+                            {
+                                killers[depth] = moves[i];
+                            }
                         }
                         return maxEval;
                     }
@@ -630,12 +652,12 @@ public class Position
                 }
 
             }
-
-            if (!whiteTable.ContainsKey(currHash) || age >= whiteTable[currHash].age && whiteTable[currHash].depth <= depth)
+            
+            if (!whiteTable.ContainsKey(currHash) || whiteTable[currHash].depth <= depth)
             {
-                whiteTable[currHash] = new Entry(maxEval, depth, null, true, age); //true value 
+                whiteTable[currHash] = new Entry(maxEval, depth, bestMv, age);
             }
-
+            
             return maxEval;
         }
     }
@@ -723,7 +745,7 @@ public class Position
                 file = 0;
             }
         }
-        if (blackMaterial > 900 || whiteMaterial > 900)
+        if (blackMaterial > 1100 || whiteMaterial > 1100)
         {
             blackEval += king + kingSquaresMiddleB[bKingIdx];
             whiteEval += king + kingSquaresMiddleW[wKingIdx];
@@ -746,7 +768,7 @@ public class Position
         return whiteEval - blackEval;
     }
 
-    static void orderMoves(ref List<Move> moves, ulong enemyPawnAttacks, char[] board)
+    static void orderMoves(ref List<Move> moves, ulong enemyPawnAttacks, char[] board, Move killer)
     {
         for (int i = 0; i < moves.Count; i++)
         {
@@ -754,9 +776,18 @@ public class Position
             int dest = moves[i].dest;
             int pieceVal = getPieceValue(src);
             int captureVal = pieceValueOrder(board[63 - dest]);
+            if(killer != null && killer.source == moves[i].source && killer.dest == moves[i].dest)
+            {
+                moves[i].moveVal = 400;
+                continue;
+            }
             if (captureVal > 0) //if capturing piece
             {
                 moves[i].moveVal += captureVal - pieceVal; 
+            }
+            else
+            {
+                moves[i].moveVal += (pieceTables[src][63 - dest]) - (pieceTables[src][63 - moves[i].source]);
             }
             if (moves[i].promotion != ' ')
             {
@@ -767,7 +798,7 @@ public class Position
                 moves[i].moveVal -= pieceVal;
             }
             //make sure to account for king squares
-            moves[i].moveVal += (pieceTables[src][63 - dest]) - (pieceTables[src][63 - moves[i].source]);
+            
         }
         //order after 11 26 97
         moves.Sort((x, y) => y.moveVal.CompareTo(x.moveVal));
