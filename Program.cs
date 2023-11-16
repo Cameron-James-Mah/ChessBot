@@ -4,8 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System.Threading.Tasks;
 using static Globals;
 using static Position;
+using System;
+
 
 
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
@@ -174,9 +177,14 @@ namespace ChessBot
                         timer.Start();
                         Move bestMove = new Move();
                         int eval = 0;
-                        //Console.WriteLine(depth);
                         int depth;
-                        //set a cap of 21 for now
+                        stopSearch = false;
+                        //stop searching after estimated time
+                        Task.Factory.StartNew(() => Thread.Sleep((int)(time * 1000)))
+                        .ContinueWith((t) =>
+                        {
+                            stopSearch = true;
+                        });
                         for (depth = 2; depth < 21; depth++)
                         {
                             Move currBest = new Move();
@@ -184,6 +192,7 @@ namespace ChessBot
                             if (color == 'b') //minimizing
                             {
                                 int minEval = 60000; //arbitrary max
+
                                 MoveGen.getPawnMoves(bPawn, empty, ref moves, whitePieces, enPassant, color);
                                 MoveGen.getKnightMoves(ref moves, whitePieces, bKnight, empty);
                                 MoveGen.getBishopMoves(ref moves, whitePieces, bBishop, allPieces);
@@ -191,8 +200,7 @@ namespace ChessBot
                                 MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                                 MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-
-                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
+                                for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -274,8 +282,7 @@ namespace ChessBot
                                 MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
                                 MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-
-                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
+                                for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -348,7 +355,7 @@ namespace ChessBot
                                 }
                                 
                             }
-                            if(timer.Elapsed.Seconds >= time)
+                            if(stopSearch)
                             {
                                 break;
                             }
