@@ -249,6 +249,8 @@ class Globals
 
     public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
     public static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
-    public static double time = 15;
+    public static double time = 5;
     public static bool stopSearch = false;
+
+    public static int qDepth = 4;
 }

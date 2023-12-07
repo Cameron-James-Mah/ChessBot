@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using static ChessBot.Program;
@@ -599,9 +600,290 @@ class MoveGen
      * CAPTURE MOVE GEN FOR QUIESCENCE
      */
 
-    public static void getPawnCaptures(ref List<Move> moves, ulong enemyPieces, ulong myPawn)
+    public static void getCaptures(ref List<Move> moves, ulong enemyPieces, ulong myPawns, ulong myKnights, ulong myBishops, ulong myRooks, ulong myQueens, ulong myKing, ulong enPassant, char color, ulong allPieces)
     {
+        //PAWN CAPTURES
+        enemyPieces |= enPassant; //add en passant moves to enemy pieces list since can be treated the same
+        ulong pawnsDest = 0;
+        if (color == 'b')
+        {
+            //east captures
+            pawnsDest = myPawns >> 9;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notAFile;
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb + 9, lsb, 'r'));
+                    moves.Add(new Move(lsb + 9, lsb, 'n'));
+                    moves.Add(new Move(lsb + 9, lsb, 'b'));
+                    moves.Add(new Move(lsb + 9, lsb, 'q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb + 9, lsb, ' ');
+                        newMove.capPassant = lsb + 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb + 9, lsb, ' ');
+                        moves.Add(newMove);
+                    }
 
+                }
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+            }
+            //west captures
+            pawnsDest = myPawns >> 7;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notHFile;
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb + 7, lsb, 'r'));
+                    moves.Add(new Move(lsb + 7, lsb, 'n'));
+                    moves.Add(new Move(lsb + 7, lsb, 'b'));
+                    moves.Add(new Move(lsb + 7, lsb, 'q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb + 7, lsb, ' ');
+                        newMove.capPassant = lsb + 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb + 7, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+
+                }
+            }
+        }
+        else if (color == 'w')
+        {
+            //west captures
+            pawnsDest = myPawns << 9;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notHFile;
+
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb - 9, lsb, 'R'));
+                    moves.Add(new Move(lsb - 9, lsb, 'N'));
+                    moves.Add(new Move(lsb - 9, lsb, 'B'));
+                    moves.Add(new Move(lsb - 9, lsb, 'Q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb - 9, lsb, ' ');
+                        newMove.capPassant = lsb - 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb - 9, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+
+                }
+            }
+            //east captures
+            pawnsDest = myPawns << 7;
+            pawnsDest &= enemyPieces;
+            pawnsDest &= notAFile;
+            while (pawnsDest != 0)
+            {
+                int lsb = BitOperations.TrailingZeroCount(pawnsDest);
+                pawnsDest = ((ulong)1 << lsb) ^ pawnsDest;
+                if (((ulong)1 << lsb & row0) > 0 || ((ulong)1 << lsb & row7) > 0)
+                {
+                    moves.Add(new Move(lsb - 7, lsb, 'R'));
+                    moves.Add(new Move(lsb - 7, lsb, 'N'));
+                    moves.Add(new Move(lsb - 7, lsb, 'B'));
+                    moves.Add(new Move(lsb - 7, lsb, 'Q'));
+                }
+                else
+                {
+                    if ((((ulong)1 << lsb) & enPassant) > 0)
+                    {
+                        Move newMove = new Move(lsb - 7, lsb, ' ');
+                        newMove.capPassant = lsb - 8;
+                        moves.Add(newMove);
+                    }
+                    else
+                    {
+                        Move newMove = new Move(lsb - 7, lsb, ' ');
+                        moves.Add(newMove);
+                    }
+                }
+            }
+        }
+        //KNIGHT CAPTURES
+        enemyPieces ^= enPassant; //remove an passant from enemyPieces board
+        while (myKnights != 0)
+        {
+            int lsb = BitOperations.TrailingZeroCount(myKnights);
+            ulong knightMoves = knightAttacks[lsb] & enemyPieces;
+            while (knightMoves != 0)
+            {
+                int kb = BitOperations.TrailingZeroCount(knightMoves);
+                knightMoves = ((ulong)1 << kb) ^ knightMoves;
+                Move newMove = new Move(lsb, kb, ' ');
+                moves.Add(newMove);
+            }
+            myKnights = ((ulong)1 << lsb) ^ myKnights;
+        }
+        //BISHOP CAPTURES
+        myBishops |= myQueens; //generate diagonal queen moves too
+        while (myBishops != 0)
+        {
+            int lsb = BitOperations.TrailingZeroCount(myBishops);
+            myBishops = ((ulong)1 << lsb) ^ myBishops; 
+            //printBitBoard(blackKnights);
+            //0 = SW, 1 = SE, 2 = NW, 3 = NE
+            ulong SWmoves = bishopAttacks[lsb, 0];
+            ulong SEmoves = bishopAttacks[lsb, 1];
+            ulong NWmoves = bishopAttacks[lsb, 2];
+            ulong NEmoves = bishopAttacks[lsb, 3];
+            //bitwise & with allPieces, bitscan for lsb or msb depending on dir to get first blocker, everything between is a valid square, then check if blocker is enemy for additional square
+                
+            //SW
+            ulong blockers = SWmoves & allPieces;
+            int msb = 63 - BitOperations.LeadingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+            //SE
+            blockers = SEmoves & allPieces;
+            msb = 63 - BitOperations.LeadingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+            //NW
+            blockers = NWmoves & allPieces;
+            msb = BitOperations.TrailingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+            //NE
+            blockers = NEmoves & allPieces;
+            msb = BitOperations.TrailingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+
+        }
+
+        //ROOK CAPTURES
+        myRooks |= myQueens; //generate vertical/horizontal queen moves too
+        while (myRooks != 0)
+        {
+            int lsb = BitOperations.TrailingZeroCount(myRooks);
+            myRooks = ((ulong)1 << lsb) ^ myRooks;
+            //printBitBoard(blackKnights);
+            //0 = S, 1 = E, 2 = W, 3 = N
+            ulong Smoves = rookAttacks[lsb, 0];
+            ulong Emoves = rookAttacks[lsb, 1];
+            ulong Wmoves = rookAttacks[lsb, 2];
+            ulong Nmoves = rookAttacks[lsb, 3];
+            //bitwise & with allPieces, bitscan for lsb or msb depending on dir to get first blocker, everything between is a valid square, then check if blocker is enemy for additional square
+            //S
+            ulong blockers = Smoves & allPieces;
+            int msb = 63 - BitOperations.LeadingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+
+            //E
+            blockers = Emoves & allPieces;
+            msb = 63 - BitOperations.LeadingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+
+            //W
+            blockers = Wmoves & allPieces;
+            msb = BitOperations.TrailingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+
+            //N
+            blockers = Nmoves & allPieces;
+            msb = BitOperations.TrailingZeroCount(blockers); //find first blocker
+            if (msb >= 0 && msb < 64) //found blocker 
+            {
+                if ((((ulong)1 << msb) & enemyPieces) > 0) //check if blocker is enemy piece(capturable)
+                {
+                    Move newMove = new Move(lsb, msb, ' ');
+                    moves.Add(newMove);
+                }
+            }
+        }
+
+        //KING CAPTURES
+        int kingSrc = BitOperations.TrailingZeroCount(myKing);
+        ulong kingCaps = kingAttacks[kingSrc] & enemyPieces;
+        while(kingCaps != 0)
+        {
+            int kb = BitOperations.TrailingZeroCount(kingCaps);
+            kingCaps = ((ulong)1 << kb) ^ kingCaps;
+            Move newMove = new Move(kingSrc, kb, ' ');
+            moves.Add(newMove);
+        }
+        
     }
 }
 
