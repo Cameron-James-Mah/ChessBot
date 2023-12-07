@@ -4,8 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using System.Threading.Tasks;
 using static Globals;
 using static Position;
+using System;
+
 
 
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
@@ -135,7 +138,6 @@ namespace ChessBot
             pieceTables.Add('k', kingSquaresMiddleB);
             pieceTables.Add('K', kingSquaresMiddleW);
 
-            int wtime, btime;
             while (true)
             {
                 string command = Console.ReadLine();
@@ -172,11 +174,16 @@ namespace ChessBot
                         
                         int age = 0;
                         timer.Start();
-                        Move bestMove = new Move();
+                        Move bestMove = null;
                         int eval = 0;
-                        //Console.WriteLine(depth);
                         int depth;
-                        //set a cap of 21 for now
+                        stopSearch = false;
+                        //stop searching after estimated time
+                        Task.Factory.StartNew(() => Thread.Sleep((int)(time * 1000)))
+                        .ContinueWith((t) =>
+                        {
+                            stopSearch = true;
+                        });
                         for (depth = 2; depth < 21; depth++)
                         {
                             Move currBest = new Move();
@@ -191,8 +198,10 @@ namespace ChessBot
                                 MoveGen.getBishopMoves(ref moves, whitePieces, bQueen, allPieces);
                                 MoveGen.getRookMoves(ref moves, whitePieces, bQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, whitePieces, bKing, empty, castleRights, allPieces, bRook, wPawn, wRook, wKnight, wBishop, wQueen, wKing, color);
-
-                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
+                                ulong enemyPawnAttacks = wPawn << 7 & notAFile;
+                                enemyPawnAttacks |= wPawn << 9 & notHFile;
+                                orderMoves(ref moves, enemyPawnAttacks, board, bestMove);
+                                for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -248,21 +257,20 @@ namespace ChessBot
                                             newHash ^= newCastleRights;
                                         }
                                         //validMoves.Add(moves[i]); 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, int.MaxValue, newHash, age);
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, minEval, newHash, age);
                                         if (temp < minEval)
                                         {
                                             currBest = moves[i];
                                             minEval = Math.Min(temp, minEval);
-                                            blackTable[currH] = new Entry(minEval, depth, moves[i], age);
                                             eval = minEval;
                                         }
-                                        
+                                        //blackTable[newHash] = new Entry(minEval, depth, null, age);
                                     }
                                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
                                 //Console.WriteLine(minEval);
-                                
+                                blackTable[currH] = new Entry(minEval, depth, currBest, age);
                             }
                             else //maximizing
                             {
@@ -274,8 +282,10 @@ namespace ChessBot
                                 MoveGen.getBishopMoves(ref moves, blackPieces, wQueen, allPieces);
                                 MoveGen.getRookMoves(ref moves, blackPieces, wQueen, allPieces);
                                 MoveGen.getKingMoves(ref moves, blackPieces, wKing, empty, castleRights, allPieces, wRook, bPawn, bRook, bKnight, bBishop, bQueen, bKing, color);
-
-                                for (int i = 0; i < moves.Count && timer.Elapsed.Seconds < time; i++)
+                                ulong enemyPawnAttacks = bPawn >> 7 & notHFile;
+                                enemyPawnAttacks |= bPawn >> 9 & notAFile;
+                                orderMoves(ref moves, enemyPawnAttacks, board, bestMove);
+                                for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
@@ -333,22 +343,21 @@ namespace ChessBot
                                             //printBitBoard(newCastleRights);
                                         }
 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', int.MinValue, int.MaxValue, newHash, age);
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', maxEval, int.MaxValue, newHash, age);
                                         if (temp > maxEval)
                                         {
                                             currBest = moves[i];
                                             maxEval = Math.Max(temp, maxEval);
                                             eval = maxEval;
-                                            whiteTable[currH] = new Entry(maxEval, depth, moves[i], age);
                                         }
-                                        
+                                        //whiteTable[newHash] = new Entry(temp, depth, null, age);
                                     }
                                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
                                 }
-                                
+                                whiteTable[currH] = new Entry(maxEval, depth, currBest, age);
                             }
-                            if(timer.Elapsed.Seconds >= time)
+                            if(stopSearch)
                             {
                                 break;
                             }
@@ -633,7 +642,69 @@ namespace ChessBot
                             printBitBoard(pawnAttacksW[i]);
                         }
                         break;
+                    case "t2":
+                        Move tm = new Move(1, 2, ' ');
+                        Move tm2 = new Move(3, 5, ' ');
+                        whiteTable[1] = new Entry(1, 2, tm, 4);
+                        //Move mv1 = whiteTable[1].mv;
+                        //whiteTable[1] = new Entry(1, 2, tm2, 4);
+                        Move t1 = whiteTable[1].mv;
+                        t1 = null;
+                        Console.WriteLine(whiteTable[1].mv.source);
+                        break;
+                    case "caps":
+                        List<Move> caps = new List<Move>();
+                        if (color == 'b')
+                        {
+                            MoveGen.getCaptures(ref caps, whitePieces, bPawn, bKnight, bBishop, bRook, bQueen, bKing, enPassant, color, allPieces);
+                        }
+                        else
+                        {
+                            MoveGen.getCaptures(ref caps, blackPieces, wPawn, wKnight, wBishop, wRook, wQueen, wKing, enPassant, color, allPieces);
+                        }
 
+                        char[] tempBoard3 = new char[64];
+                        board.CopyTo(tempBoard3, 0);
+                        List<Move> validCaps = new List<Move>();
+                        for (int i = 0; i < caps.Count; i++)
+                        {
+                            tempBoard3[63 - caps[i].dest] = tempBoard3[63 - caps[i].source];
+                            tempBoard3[63 - caps[i].source] = ' ';
+                            Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
+                                ref wQueen, ref wKing, ref allPieces, ref empty, tempBoard3, ref whitePieces, ref blackPieces);
+
+                            int kingSource = 0;
+                            if (color == 'b')
+                            {
+                                kingSource = BitOperations.TrailingZeroCount(bKing);
+                                if (!isSquareAttacked(kingSource, wBishop, wRook, wKnight, wQueen, wPawn, wKing, allPieces, color))
+                                {
+                                    validCaps.Add(caps[i]);
+                                }
+                            }
+                            else
+                            {
+                                kingSource = BitOperations.TrailingZeroCount(wKing);
+                                if (!isSquareAttacked(kingSource, bBishop, bRook, bKnight, bQueen, bPawn, bKing, allPieces, color))
+                                {
+                                    validCaps.Add(caps[i]);
+                                }
+                            }
+
+                            
+                            board.CopyTo(tempBoard3, 0);
+                        }
+
+                        for (int i = 0; i < validCaps.Count; i++)
+                        {
+                            Console.WriteLine("From: " + notation[validCaps[i].source] + "" + notation[validCaps[i].dest] + " Promotion: " + validCaps[i].promotion);
+                        }
+
+                        if (validCaps.Count == 0)
+                        {
+                            Console.WriteLine("No captures");
+                        }
+                        break;
                     default:
                         //Debugger.Launch();
                         Console.WriteLine("No command");
@@ -665,6 +736,41 @@ namespace ChessBot
                 Console.Write("\n");
             }
             Console.Write("\n");
+        }
+        static void orderMoves(ref List<Move> moves, ulong enemyPawnAttacks, char[] board, Move bestMv)
+        {
+            for (int i = 0; i < moves.Count; i++)
+            {
+                char src = board[63 - moves[i].source];
+                int dest = moves[i].dest;
+                int pieceVal = getPieceValue(src);
+                int captureVal = pieceValueOrder(board[63 - dest]);
+                if (bestMv != null && moves[i].source == bestMv.source && moves[i].dest == bestMv.dest)
+                {
+                    moves[i].moveVal = 10000;
+                    continue;
+                }
+                if (captureVal > 0) //if capturing piece
+                {
+                    moves[i].moveVal += captureVal - pieceVal;
+                }
+                else
+                {
+                    moves[i].moveVal += (pieceTables[src][63 - dest]) - (pieceTables[src][63 - moves[i].source]);
+                }
+                if (moves[i].promotion != ' ')
+                {
+                    moves[i].moveVal += pieceValueOrder(moves[i].promotion);
+                }
+                if ((((ulong)1 << dest) & enemyPawnAttacks) > 0) //moving piece to enemy pawn attack range, generally not a good move
+                {
+                    moves[i].moveVal -= pieceVal;
+                }
+                //make sure to account for king squares
+            }
+            //order after 11 26 97
+            //Console.WriteLine();
+            moves.Sort((x, y) => y.moveVal.CompareTo(x.moveVal));
         }
     }
 }
