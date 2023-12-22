@@ -138,6 +138,10 @@ namespace ChessBot
             pieceTables.Add('k', kingSquaresMiddleB);
             pieceTables.Add('K', kingSquaresMiddleW);
 
+            isolated.Add(aIsolated); isolated.Add(bIsolated); isolated.Add(cIsolated);
+            isolated.Add(dIsolated); isolated.Add(eIsolated); isolated.Add(fIsolated);
+            isolated.Add(gIsolated); isolated.Add(hIsolated);
+
             while (true)
             {
                 string command = Console.ReadLine();
@@ -184,7 +188,7 @@ namespace ChessBot
                         {
                             stopSearch = true;
                         });
-                        for (depth = 2; depth < 21; depth++)
+                        for (depth = 1; depth < 21; depth++)
                         {
                             Move currBest = new Move();
                             List<Move> moves = new List<Move>();
@@ -203,6 +207,7 @@ namespace ChessBot
                                 orderMoves(ref moves, enemyPawnAttacks, board, bestMove);
                                 for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
+                                    repetitionSearch = repetition;
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
                                     ulong newHash = currH;
@@ -257,7 +262,7 @@ namespace ChessBot
                                             newHash ^= newCastleRights;
                                         }
                                         //validMoves.Add(moves[i]); 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, minEval, newHash, age);
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, minEval, newHash, age, false);
                                         if (temp < minEval)
                                         {
                                             currBest = moves[i];
@@ -287,6 +292,7 @@ namespace ChessBot
                                 orderMoves(ref moves, enemyPawnAttacks, board, bestMove);
                                 for (int i = 0; i < moves.Count && !stopSearch; i++)
                                 {
+                                    repetitionSearch = repetition;
                                     char[] tempBoard = new char[64];
                                     board.CopyTo(tempBoard, 0);
                                     ulong newHash = currH;
@@ -343,7 +349,7 @@ namespace ChessBot
                                             //printBitBoard(newCastleRights);
                                         }
 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', maxEval, int.MaxValue, newHash, age);
+                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', maxEval, int.MaxValue, newHash, age, false);
                                         if (temp > maxEval)
                                         {
                                             currBest = moves[i];
@@ -643,14 +649,10 @@ namespace ChessBot
                         }
                         break;
                     case "t2":
-                        Move tm = new Move(1, 2, ' ');
-                        Move tm2 = new Move(3, 5, ' ');
-                        whiteTable[1] = new Entry(1, 2, tm, 4);
-                        //Move mv1 = whiteTable[1].mv;
-                        //whiteTable[1] = new Entry(1, 2, tm2, 4);
-                        Move t1 = whiteTable[1].mv;
-                        t1 = null;
-                        Console.WriteLine(whiteTable[1].mv.source);
+                        for(int i = 0; i < 7; i++)
+                        {
+                            printBitBoard(isolated[i]);
+                        }
                         break;
                     case "caps":
                         List<Move> caps = new List<Move>();
@@ -704,6 +706,9 @@ namespace ChessBot
                         {
                             Console.WriteLine("No captures");
                         }
+                        break;
+                    case "eval":
+                        Console.WriteLine(Position.eval(board, 'w', wPawn, bPawn));
                         break;
                     default:
                         //Debugger.Launch();
