@@ -8,6 +8,10 @@ using static ChessBot.Program;
 //king-pawn endgame: position fen 3k4/8/5p2/8/3P4/4P3/3K4/8 b - - 0 1
 
 //bug position: position fen r4r2/pp1Q1p1k/7p/3p4/2P1p2q/P7/1P1NK1P1/n1B2B2 b - - 1 25
+
+//gives bad move: position fen r1bqkb1r/p1p2ppp/p1p2p2/8/3Pp3/2N5/PPP2PPP/R2QK1NR w KQkq - 0 1 //flipped version: position fen r2qk1nr/ppp2ppp/2n5/3pP3/8/P1P2P1P/P1P2PP1/R1BQKB1R b KQkq - 0 1
+
+//0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 class Globals
 {
     //row bitmasks
@@ -25,6 +29,20 @@ class Globals
     public const ulong notABFile = 0b_00111111_00111111_00111111_00111111_00111111_00111111_00111111_00111111;
     public const ulong notHFile = 0b_11111110_11111110_11111110_11111110_11111110_11111110_11111110_11111110;
     public const ulong notHGFile = 0b_11111100_11111100_11111100_11111100_11111100_11111100_11111100_11111100;
+
+    public const ulong aFile = 0b_00000000_10000000_10000000_10000000_10000000_10000000_10000000_00000000;
+
+    public const ulong aIsolated = 0b_01000000_01000000_01000000_01000000_01000000_01000000_01000000_01000000;
+    public const ulong bIsolated = 0b_10100000_10100000_10100000_10100000_10100000_10100000_10100000_10100000;
+    public const ulong cIsolated = 0b_01010000_01010000_01010000_01010000_01010000_01010000_01010000_01010000;
+    public const ulong dIsolated = 0b_00101000_00101000_00101000_00101000_00101000_00101000_00101000_00101000;
+    public const ulong eIsolated = 0b_00010100_00010100_00010100_00010100_00010100_00010100_00010100_00010100;
+    public const ulong fIsolated = 0b_00001010_00001010_00001010_00001010_00001010_00001010_00001010_00001010;
+    public const ulong gIsolated = 0b_00000101_00000101_00000101_00000101_00000101_00000101_00000101_00000101;
+    public const ulong hIsolated = 0b_00000010_00000010_00000010_00000010_00000010_00000010_00000010_00000010;
+
+    public static List<ulong> isolated = new List<ulong>();
+
 
     //row and column bitmasks for bishop attack table generation
     public const ulong notNEBorder = 0b_00000000_11111110_11111110_11111110_11111110_11111110_11111110_11111110;
@@ -84,7 +102,8 @@ class Globals
     public static Dictionary<ulong, Entry> blackTable = new Dictionary<ulong, Entry>(200000); //transposition table for black, should i maybe init with size and load factor later?
     public static Move[] killers = new Move[21]; //killer moves
     public static Dictionary<ulong, int> repetition = new Dictionary<ulong, int>(); //<board hash, occurences>for checking threefold repetition as i am iterative over moves of given position increment occurence of hash position
-    
+    public static Dictionary<ulong, int> repetitionSearch = new Dictionary<ulong, int>(); //will copy repetition by value before searching moves branching from helper function/root node
+
     /*
      * 
      * 0, 0, 0, 0, 0, 0, 0, 0,
@@ -99,12 +118,11 @@ class Globals
 
 
     //piece evaluation squares 
-    //Values from https://www.chessprogramming.org/Simplified_Evaluation_Function
     //queen and knight values dont care about color
     public static int[] pawnSquaresW = new int[64] {
         0,  0,  0,  0,  0,  0,  0,  0,
+       100,100, 100,100, 100, 100, 100, 100,
         50, 50, 50, 50, 50, 50, 50, 50,
-        10, 10, 20, 30, 30, 20, 10, 10,
          5,  5, 10, 25, 25, 10,  5,  5,
          0,  0,  0, 20, 20,  0,  0,  0,
          5, -5,-10,  0,  0,-10, -5,  5,
@@ -118,8 +136,8 @@ class Globals
         5, -5,-10,  0,  0,-10, -5,  5,
         0,  0,  0, 20, 20,  0,  0,  0,
         5,  5, 10, 25, 25, 10,  5,  5,
-        10, 10, 20, 30, 30, 20, 10, 10,
         50, 50, 50, 50, 50, 50, 50, 50,
+        100,100, 100,100, 100, 100, 100, 100,
         0,  0,  0,  0,  0,  0,  0,  0
     };
 
@@ -136,7 +154,18 @@ class Globals
         -50,-40,-30,-30,-30,-30,-40,-50,
     };
 
-    public static int[] bishopSquaresW = new int[64]
+
+    /*
+     * -20,-10,-10,-10,-10,-10,-10,-20,
+        -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  5, 10, 10, 10, 10,  5,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+         10, 10, 10,  5,  5, 10, 10, 10,
+        -10,  5,  0,  0,  0,  0,  5,-10,
+        -20,-10,-10,-10,-10,-10,-10,-20,
+     */
+    public static int[] bishopSquaresB = new int[64]
     {
         -20,-10,-10,-10,-10,-10,-10,-20,
         -10,  0,  0,  0,  0,  0,  0,-10,
@@ -148,15 +177,15 @@ class Globals
         -20,-10,-10,-10,-10,-10,-10,-20,
     };
 
-    public static int[] bishopSquaresB = new int[64]
+    public static int[] bishopSquaresW = new int[64]
     {
         -20,-10,-10,-10,-10,-10,-10,-20,
-        -10,  5,  0,  0,  0,  0,  5,-10,
-        -10, 10, 10, 10, 10, 10, 10,-10,
-        -10,  0, 10, 10, 10, 10,  0,-10,
-        -10,  5,  5, 10, 10,  5,  5,-10,
-        -10,  0,  5, 10, 10,  5,  0,-10,
         -10,  0,  0,  0,  0,  0,  0,-10,
+        -10,  0,  5, 10, 10,  5,  0,-10,
+        -10,  5,  5, 10, 10,  5,  5,-10,
+        -10,  0, 10, 10, 10, 10,  0,-10,
+        -10, 10, 10, 10, 10, 10, 10,-10,
+        -10,  5,  0,  0,  0,  0,  5,-10,
         -20,-10,-10,-10,-10,-10,-10,-20,
     };
 
@@ -207,11 +236,11 @@ class Globals
         -20,-30,-30,-40,-40,-30,-30,-20,
         -10,-20,-20,-20,-20,-20,-20,-10,
          20, 20,  0,  0,  0,  0, 20, 20,
-         20, 30, 10,  0,  0, 10, 30, 20
+         20, 30, 20,  0,  0, 10, 30, 20
     };
 
     public static int[] kingSquaresMiddleB = new int[64] {
-        20, 30, 10,  0,  0, 10, 30, 20,
+        20, 30, 20,  0,  0, 10, 30, 20,
         20, 20,  0,  0,  0,  0, 20, 20,
         -10,-20,-20,-20,-20,-20,-20,-10,
         -20,-30,-30,-40,-40,-30,-30,-20,
@@ -249,7 +278,7 @@ class Globals
 
     public static Dictionary<char, int[]> pieceTables = new Dictionary<char, int[]>(); //piece square tables for move ordering, p will map to black pawn piece table, etc
     public static readonly Stopwatch timer = new Stopwatch(); //used for measuring perft performance, also minimax performance
-    public static double time = 5;
+    public static double time = 200;
     public static bool stopSearch = false;
 
     public static int qDepth = 4;
