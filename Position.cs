@@ -151,46 +151,53 @@ public class Position
     public static int quiescence(int alpha, int beta, char[] board, char color,
         ulong bPawn, ulong bRook, ulong bKnight, ulong bBishop, ulong bQueen, ulong bKing,
         ulong wPawn, ulong wRook, ulong wKnight, ulong wBishop, ulong wQueen, ulong wKing,
-        ulong allPieces, ulong empty, ulong whitePieces, ulong blackPieces, ulong enPassant, int depth
+        ulong allPieces, ulong empty, ulong whitePieces, ulong blackPieces, ulong enPassant
         )
     {
-        if (depth == 0)
-        {
-            return eval(board, color, wPawn, bPawn);
-        }
         if (stopSearch)
         {
             return 0;
         }
         int stand_pat = eval(board, color, wPawn, bPawn);
-        if(stand_pat >= beta)
-        {
-            return beta;
-        }
-        /*
-        if(stand_pat < alpha - 900)
-        {
-            return alpha;
-        }*/
-
-        if(alpha < stand_pat)
-        {
-            alpha = stand_pat;
-        }
         List<Move> moves = new List<Move>();
         char[] tempBoard = new char[64];
+        int delta = 1400;
         if (color == 'b')
         {
+
+            if (beta <= stand_pat)
+            {
+                return beta;
+            }
+            //delta pruning
+            if (stand_pat - delta > beta)
+            {
+                return alpha;
+            }
+            beta = Math.Min(beta, stand_pat);
             MoveGen.getCaptures(ref moves, whitePieces, bPawn, bKnight, bBishop, bRook, bQueen, bKing, 0, color, allPieces);
         }
         else
         {
+            if (stand_pat <= alpha)
+            {
+                return alpha;
+            }
+            //delta pruning
+            if (stand_pat + delta < alpha)
+            {
+                return beta;
+            }
+            alpha = Math.Max(alpha, stand_pat);
             MoveGen.getCaptures(ref moves, blackPieces, wPawn, wKnight, wBishop, wRook, wQueen, wKing, 0, color, allPieces);
         }
 
         orderCaptures(ref moves, board);
         int score = 0;
-        for(int i = 0; i < moves.Count; i++)
+        //int minEval = 60000;
+        //int maxEval = -60000;
+        bool moved = false;
+        for (int i = 0; i < moves.Count; i++)
         {
             ulong bPawn2 = bPawn; ulong bRook2 = bRook; ulong bKnight2 = bKnight; ulong bBishop2 = bBishop; ulong bQueen2 = bQueen; ulong bKing2 = bKing;
             ulong wPawn2 = wPawn; ulong wRook2 = wRook; ulong wKnight2 = wKnight; ulong wBishop2 = wBishop; ulong wQueen2 = wQueen; ulong wKing2 = wKing;
@@ -220,19 +227,24 @@ public class Position
             {
                 if (!isSquareAttacked(BitOperations.TrailingZeroCount(bKing2), wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b'))
                 {
+                    moved = true;
                     empty = ~allPieces;
                     whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
                     blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
+                    //score = -quiescence(-beta, -alpha, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
+                    score = quiescence(alpha, beta, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant);
+                    /*
                     if(isSquareAttacked(BitOperations.TrailingZeroCount(wKing2), bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w'))
                     {
-                        score = quiescence(alpha, beta, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
+                        score = -quiescence(-beta, -alpha, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
                     }
                     else
                     {
-                        score = quiescence(alpha, beta, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth - 1);
+                        score = -quiescence(-beta, -alpha, tempBoard, 'w', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth - 1);
                     }
+                    */
+                    //minEval = Math.Min(score, minEval);
                     beta = Math.Min(beta, score);
-
                     if (beta <= alpha)
                     {
                         return beta;
@@ -243,25 +255,29 @@ public class Position
             {
                 if (!isSquareAttacked(BitOperations.TrailingZeroCount(wKing2), bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w'))
                 {
+                    moved = true;
                     empty = ~allPieces;
                     whitePieces = wPawn2 | wRook2 | wKnight2 | wBishop2 | wQueen2 | wKing2;
                     blackPieces = bPawn2 | bRook2 | bKnight2 | bBishop2 | bQueen2 | bKing2;
+                    //score = -quiescence(-beta, -alpha, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
+                    score = quiescence(alpha, beta, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant);
+                    /*
                     if (isSquareAttacked(BitOperations.TrailingZeroCount(bKing2), wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b'))
                     {
-                        score = quiescence(alpha, beta, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
+                        score = -quiescence(-beta, -alpha, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth);
                     }
                     else
                     {
-                        score = quiescence(alpha, beta, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth - 1);
+                        score = -quiescence(-beta, -alpha, tempBoard, 'b', bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, whitePieces, blackPieces, enPassant, depth - 1);
                     }
-                    
+                    */
+                    //maxEval = Math.Max(score, maxEval);
                     alpha = Math.Max(score, alpha);
                     if (beta <= alpha)
                     {
                         return alpha;
                     }
                 }
-                    
             }
             /*
             if (score >= beta)
@@ -273,6 +289,10 @@ public class Position
                 alpha = score;
             }*/
         }
+        if (color == 'b')
+        {
+            return beta;
+        }
         return alpha;
     }
 
@@ -283,8 +303,8 @@ public class Position
     {
         if (depth == 0)
         {
-            //return eval(board, color);
-            return quiescence(alpha, beta, board, color, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, whitePieces, blackPieces, enPassant, qDepth);
+            //return eval(board, color, wPawn, bPawn);
+            return quiescence(alpha, beta, board, color, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, whitePieces, blackPieces, enPassant);
         }
         if (isRepetition(currHash)) //3 move repetition
         {
@@ -423,6 +443,7 @@ public class Position
                         newHash ^= newCastleRights;
                     }
                     int temp;
+                    /*
                     if (isSquareAttacked(BitOperations.TrailingZeroCount(wKing2), bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w')) //check extension
                     {
                         temp = minimax(depth, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
@@ -430,10 +451,10 @@ public class Position
                     else
                     {
                         temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
-                    }
-                    
+                    }*/
+                    temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
                     //minEval = Math.Min(temp, minEval);
-                    if(temp <= minEval)
+                    if (temp <= minEval)
                     {
                         minEval = temp;
                         //bestMv = moves[i];
@@ -604,6 +625,7 @@ public class Position
                         newHash ^= newCastleRights;
                     }
                     int temp;
+                    /*
                     if (isSquareAttacked(BitOperations.TrailingZeroCount(bKing2), wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b')) //check extension
                     {
                         temp = minimax(depth, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
@@ -611,8 +633,9 @@ public class Position
                     else
                     {
                         temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
-                    }
-                    if(temp >= maxEval)
+                    }*/
+                    temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
+                    if (temp >= maxEval)
                     {
                         maxEval = temp;
                         //bestMv = moves[i];
@@ -674,11 +697,11 @@ public class Position
     public static int eval(char[] board, char color, ulong wPawn, ulong bPawn)
     {
         int pawn = 100; //P/p
-        int knight = 320; //N/n
-        int bishop = 330; //B/b
-        int rook = 500; //R/r
-        int queen = 900; //Q/q
-        int king = 100; //K/k
+        int knight = 420; //N/n
+        int bishop = 470; //B/b
+        int rook = 750; //R/r
+        int queen = 1400; //Q/q
+        int king = 0; //K/k
         //do i need a  king eval?
         int whiteEval = 0;
         int blackEval = 0;
@@ -779,6 +802,7 @@ public class Position
                 file = 0;
             }
         }
+        
         if (blackMaterial > 1300 || whiteMaterial > 1300)
         {
             blackEval += king + kingSquaresMiddleB[bKingIdx];
@@ -874,7 +898,7 @@ public class Position
             case 'R': case 'r':
                 return 750;
             case 'Q': case 'q':
-                return 900;
+                return 1400;
             default:
                 return 0;
         }
@@ -889,16 +913,16 @@ public class Position
                 return 500;
             case 'N':
             case 'n':
-                return 1600;
+                return 2100;
             case 'B':
             case 'b':
-                return 1650;
+                return 2350;
             case 'R':
             case 'r':
-                return 2500;
+                return 3750;
             case 'Q':
             case 'q':
-                return 4500;
+                return 7000;
             default:
                 return 0;
         }

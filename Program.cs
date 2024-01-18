@@ -188,8 +188,9 @@ namespace ChessBot
                         {
                             stopSearch = true;
                         });
-                        for (depth = 1; depth < 21; depth++)
+                        for (depth = 0; depth < 21; depth++)
                         {
+
                             Move currBest = new Move();
                             List<Move> moves = new List<Move>();
                             if (color == 'b') //minimizing
@@ -262,7 +263,7 @@ namespace ChessBot
                                             newHash ^= newCastleRights;
                                         }
                                         //validMoves.Add(moves[i]); 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, minEval, newHash, age, false);
+                                        int temp = minimax(depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', int.MinValue, minEval, newHash, age, false);
                                         if (temp < minEval)
                                         {
                                             currBest = moves[i];
@@ -349,7 +350,7 @@ namespace ChessBot
                                             //printBitBoard(newCastleRights);
                                         }
 
-                                        int temp = minimax(depth - 1, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', maxEval, int.MaxValue, newHash, age, false);
+                                        int temp = minimax(depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', maxEval, int.MaxValue, newHash, age, false);
                                         if (temp > maxEval)
                                         {
                                             currBest = moves[i];
@@ -369,6 +370,7 @@ namespace ChessBot
                             }
                             bestMove = currBest;
                             age++;
+                            //Array.Clear(killers, 0, killers.Length);
                             //Console.WriteLine(notation[currBest.source] + notation[currBest.dest]);
                         }
 
@@ -516,7 +518,7 @@ namespace ChessBot
                             }
                             ulong curr = Perft.perft(tests[i].depth, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop,
                             wQueen, wKing, allPieces, empty, board, whitePieces, blackPieces, castleRights, enPassant, color);
-                            res += "\n" + tests[i].fen + " Expected nodes: " + tests[i].result + " Traversed nodes: " + curr;
+                            res += "\n" + tests[i].fen + " Expected nodes: " + tests[i].result + " Traversed nodes: " + curr + " Depth: " + tests[i].depth;
                             if (curr == tests[i].result)
                             {
                                 res += " TEST PASSED";
