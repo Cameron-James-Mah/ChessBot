@@ -11,6 +11,8 @@ using static ChessBot.Program;
 
 //gives bad move: position fen r1bqkb1r/p1p2ppp/p1p2p2/8/3Pp3/2N5/PPP2PPP/R2QK1NR w KQkq - 0 1 //flipped version: position fen r2qk1nr/ppp2ppp/2n5/3pP3/8/P1P2P1P/P1P2PP1/R1BQKB1R b KQkq - 0 1
 
+//Why doesn't engine take c3? 2r1kr2/ppp1np2/4p3/3pP2Q/b2P2B1/1PP5/P7/2KRq1NR b - - 4 25
+
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 class Globals
 {
