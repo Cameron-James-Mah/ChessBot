@@ -188,7 +188,7 @@ namespace ChessBot
                         {
                             stopSearch = true;
                         });
-                        for (depth = 0; depth < 21; depth++)
+                        for (depth = 0; depth < 9; depth++)
                         {
 
                             Move currBest = new Move();

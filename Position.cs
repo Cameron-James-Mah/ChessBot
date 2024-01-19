@@ -443,7 +443,7 @@ public class Position
                         newHash ^= newCastleRights;
                     }
                     int temp;
-                    /*
+                    
                     if (isSquareAttacked(BitOperations.TrailingZeroCount(wKing2), bBishop2, bRook2, bKnight2, bQueen2, bPawn2, bKing2, allPieces, 'w')) //check extension
                     {
                         temp = minimax(depth, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
@@ -451,8 +451,8 @@ public class Position
                     else
                     {
                         temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
-                    }*/
-                    temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
+                    }
+                    //temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'w', alpha, beta, newHash, age, false);
                     //minEval = Math.Min(temp, minEval);
                     if (temp <= minEval)
                     {
@@ -625,7 +625,7 @@ public class Position
                         newHash ^= newCastleRights;
                     }
                     int temp;
-                    /*
+                    
                     if (isSquareAttacked(BitOperations.TrailingZeroCount(bKing2), wBishop2, wRook2, wKnight2, wQueen2, wPawn2, wKing2, allPieces, 'b')) //check extension
                     {
                         temp = minimax(depth, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
@@ -633,8 +633,8 @@ public class Position
                     else
                     {
                         temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
-                    }*/
-                    temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
+                    }
+                    //temp = minimax(depth - 1, bPawn2, bRook2, bKnight2, bBishop2, bQueen2, bKing2, wPawn2, wRook2, wKnight2, wBishop2, wQueen2, wKing2, allPieces, empty, tempBoard, whitePieces, blackPieces, newCastleRights, newEnPassant, 'b', alpha, beta, newHash, age, false);
                     if (temp >= maxEval)
                     {
                         maxEval = temp;
