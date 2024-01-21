@@ -716,27 +716,28 @@ public class Position
         int bFile = 0;
         int rank = 0;
         int file = 0;
-
-        //int wPawnFiles = 0b_00000000;
-        //int bPawnFiles = 0b_00000000;
+        int isoPenalty = 25;
+        int doublePenalty = 30;
+        int wPawnFiles = 0b_00000000;
+        int bPawnFiles = 0b_00000000;
         for (int i = 0; i < board.Length; i++)
         {
             switch (board[i])
             {
                 case 'P':
                     whiteEval += pawn + pawnSquaresW[i];
-                    //int currFileW = 1 << (8 - file);
-                    /*
+                    int currFileW = 1 << (8 - file);
+                    
                     if ((currFileW & wPawnFiles) > 0) //checking for doubled pawns
                     {
-                        whiteEval -= 20;
+                        whiteEval -= doublePenalty;
                     }
                     
                     wPawnFiles |= currFileW;
                     if ((isolated[file] & wPawn) == 0) //checking if isolated pawn
                     {
-                        whiteEval -= 20;
-                    }*/
+                        whiteEval -= isoPenalty;
+                    }
                     break;
                 case 'N':
                     whiteEval += knight + knightSquares[i];
@@ -761,17 +762,17 @@ public class Position
                     break;
                 case 'p':
                     blackEval += pawn + pawnSquaresB[i];
-                    //int currFileB = 1 << (8 - file);
-                    /*
+                    int currFileB = 1 << (8 - file);
+                    
                     if ((currFileB & bPawnFiles) > 0) //checking for doubled pawns
                     {
-                        blackEval -= 20;
+                        blackEval -= doublePenalty;
                     }
                     bPawnFiles |= currFileB;
                     if ((isolated[file] & bPawn) == 0) //checking if isolated pawn
                     {
-                        blackEval -= 20;
-                    }*/
+                        blackEval -= isoPenalty;
+                    }
                     break;
                 case 'n':
                     blackEval += knight + knightSquares[i];
@@ -894,7 +895,7 @@ public class Position
             case 'N': case 'n':
                 return 420;
             case 'B': case 'b':
-                return 470;
+                return 480;
             case 'R': case 'r':
                 return 750;
             case 'Q': case 'q':
@@ -916,7 +917,7 @@ public class Position
                 return 2100;
             case 'B':
             case 'b':
-                return 2350;
+                return 2400;
             case 'R':
             case 'r':
                 return 3750;
