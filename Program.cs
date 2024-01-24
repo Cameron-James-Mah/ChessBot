@@ -181,6 +181,9 @@ namespace ChessBot
                         Move bestMove = null;
                         int eval = 0;
                         int depth;
+                        int bestVal = 0;
+                        int currVal = 0;
+                        totalNodes = 0;
                         stopSearch = false;
                         //stop searching after estimated time
                         Task.Factory.StartNew(() => Thread.Sleep((int)(time * 1000)))
@@ -188,9 +191,9 @@ namespace ChessBot
                         {
                             stopSearch = true;
                         });
-                        for (depth = 0; depth < 21; depth++)
+                        currNodes = 0;
+                        for (depth = 0; depth < 8; depth++)
                         {
-
                             Move currBest = new Move();
                             List<Move> moves = new List<Move>();
                             if (color == 'b') //minimizing
@@ -269,11 +272,13 @@ namespace ChessBot
                                             currBest = moves[i];
                                             minEval = Math.Min(temp, minEval);
                                             eval = minEval;
+                                            currVal = temp;
                                         }
                                         //blackTable[newHash] = new Entry(minEval, depth, null, age);
                                     }
                                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
+                                    currNodes++;
                                 }
                                 //Console.WriteLine(minEval);
                                 blackTable[currH] = new Entry(minEval, depth, currBest, age);
@@ -356,11 +361,13 @@ namespace ChessBot
                                             currBest = moves[i];
                                             maxEval = Math.Max(temp, maxEval);
                                             eval = maxEval;
+                                            currVal = temp;
                                         }
                                         //whiteTable[newHash] = new Entry(temp, depth, null, age);
                                     }
                                     Board.makeBoards(ref bPawn, ref bRook, ref bKnight, ref bBishop, ref bQueen, ref bKing, ref wPawn, ref wRook, ref wKnight, ref wBishop,
                                         ref wQueen, ref wKing, ref allPieces, ref empty, board, ref whitePieces, ref blackPieces);
+                                    currNodes++;
                                 }
                                 whiteTable[currH] = new Entry(maxEval, depth, currBest, age);
                             }
@@ -368,7 +375,9 @@ namespace ChessBot
                             {
                                 break;
                             }
+                            totalNodes += currNodes;
                             bestMove = currBest;
+                            bestVal = currVal;
                             age++;
                             //Array.Clear(killers, 0, killers.Length);
                             //Console.WriteLine(notation[currBest.source] + notation[currBest.dest]);
@@ -388,7 +397,7 @@ namespace ChessBot
                             Console.WriteLine("bestmove " + notation[bestMove.source] + notation[bestMove.dest]);
                         }
                         timer.Stop();
-                        Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Interrupted Depth: " + depth);
+                        Console.WriteLine("Elapsed time: " + timer.Elapsed.ToString() + " Interrupted Depth: " + depth + " Nodes: " + currNodes + " Eval: " + bestVal);
                         //Console.WriteLine("Alloted time: " + time + " Interrupted Depth: " + depth);
                         //Console.WriteLine("Seconds elapsed: " + timer.Elapsed.Seconds.ToString() + " Depth: " + depth);
                         timer.Reset();

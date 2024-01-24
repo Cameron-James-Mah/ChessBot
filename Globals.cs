@@ -13,6 +13,8 @@ using static ChessBot.Program;
 
 //Why doesn't engine take c3? 2r1kr2/ppp1np2/4p3/3pP2Q/b2P2B1/1PP5/P7/2KRq1NR b - - 4 25
 
+//position fen r1bqkb1r/ppp2ppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R b KQkq - 0 5 //early game pos
+
 //0b_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
 class Globals
 {
@@ -273,4 +275,7 @@ class Globals
     public static bool stopSearch = false;
 
     public static int qDepth = 6;
+
+    public static int totalNodes;
+    public static int currNodes;
 }
