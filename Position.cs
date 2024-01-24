@@ -158,13 +158,14 @@ public class Position
         {
             return 0;
         }
+        currNodes++;
         int stand_pat = eval(board, color, wPawn, bPawn);
         List<Move> moves = new List<Move>();
         char[] tempBoard = new char[64];
         int delta = 1400;
         if (color == 'b')
         {
-
+            
             if (beta <= stand_pat)
             {
                 return beta;
@@ -179,6 +180,7 @@ public class Position
         }
         else
         {
+            
             if (stand_pat <= alpha)
             {
                 return alpha;
@@ -191,7 +193,6 @@ public class Position
             alpha = Math.Max(alpha, stand_pat);
             MoveGen.getCaptures(ref moves, blackPieces, wPawn, wKnight, wBishop, wRook, wQueen, wKing, 0, color, allPieces);
         }
-
         orderCaptures(ref moves, board);
         int score = 0;
         //int minEval = 60000;
@@ -301,16 +302,17 @@ public class Position
                                          ulong allPieces, ulong empty, char[] board, ulong whitePieces, ulong blackPieces,
                                          ulong castleRights, ulong enPassant, char color, int alpha, int beta, ulong currHash, int age, bool isNull)
     {
+        if (stopSearch)
+        {
+            return 0;
+        }
+        currNodes++;
         if (depth == 0)
         {
             //return eval(board, color, wPawn, bPawn);
             return quiescence(alpha, beta, board, color, bPawn, bRook, bKnight, bBishop, bQueen, bKing, wPawn, wRook, wKnight, wBishop, wQueen, wKing, allPieces, empty, whitePieces, blackPieces, enPassant);
         }
         if (isRepetition(currHash)) //3 move repetition
-        {
-            return 0;
-        }
-        if (stopSearch)
         {
             return 0;
         }
@@ -467,7 +469,7 @@ public class Position
                         //if black table has entry or entry depth is below current depth
                         if (!blackTable.ContainsKey(currHash) || blackTable[currHash].depth <= depth || blackTable[currHash].age < age)
                         {   
-                            blackTable[currHash] = new Entry(minEval, depth, moves[bestIdx], age);
+                            blackTable[currHash] = new Entry(minEval, depth, moves[i], age);
                         }
                         if (board[63 - moves[i].dest] == ' ')
                         {
@@ -534,7 +536,7 @@ public class Position
                     return beta;
                 }
             }
-
+            currNodes++;
             MoveGen.getPawnMoves(wPawn, empty, ref moves, blackPieces, enPassant, color);
             MoveGen.getKnightMoves(ref moves, blackPieces, wKnight, empty);
             MoveGen.getBishopMoves(ref moves, blackPieces, wBishop, allPieces);
@@ -639,7 +641,6 @@ public class Position
                     {
                         maxEval = temp;
                         //bestMv = moves[i];
-                        bestIdx = i;
                     }
                     //maxEval = Math.Max(maxEval, temp);
                     alpha = Math.Max(maxEval, alpha);
@@ -652,7 +653,7 @@ public class Position
                             //Console.WriteLine("---------------------------------------------");
                             //whiteTable.Remove(currHash);
                             //whiteTable.Add(currHash, new Entry(maxEval, depth, moves[i], currHash, board));
-                            whiteTable[currHash] = new Entry(maxEval, depth, moves[bestIdx], age);
+                            whiteTable[currHash] = new Entry(maxEval, depth, moves[i], age);
                             /*
                             Board.printBoard(board);
                             Console.WriteLine(notation[moves[i].source] + notation[moves[i].dest]);*/
@@ -834,7 +835,7 @@ public class Position
             char src = board[63 - moves[i].source];
             int dest = moves[i].dest;
             int pieceVal = getPieceValue(src);
-            int captureVal = pieceValueOrder(board[63 - dest]);
+            int captureVal = getPieceValue(board[63 - dest]);
             if (hashMove != null && hashMove.source == moves[i].source && hashMove.dest == moves[i].dest)
             {
                 //Board.printBoard(board);
@@ -847,12 +848,16 @@ public class Position
             if (killer != null && killer.source == moves[i].source && killer.dest == moves[i].dest)
             {
                 killer = null;
-                moves[i].moveVal = 400;
+                moves[i].moveVal = 4000;
                 continue;
             }
             if (captureVal > 0) //if capturing piece
             {
-                moves[i].moveVal += captureVal - pieceVal; 
+                moves[i].moveVal += captureVal - pieceVal + 1000; 
+                if(captureVal >= pieceVal)
+                {
+                    moves[i].moveVal += 4500;
+                }
             }
             else
             {
@@ -862,6 +867,7 @@ public class Position
             {
                 moves[i].moveVal += pieceValueOrder(moves[i].promotion);
             }
+
             if ((((ulong)1 << dest) & enemyPawnAttacks) > 0) //moving piece to enemy pawn attack range, generally not a good move
             {
                 moves[i].moveVal -= pieceVal;
